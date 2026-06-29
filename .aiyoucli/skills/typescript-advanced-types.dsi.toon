@@ -1,0 +1,141 @@
+# DSI — auto-generated from Markdown. DO NOT edit.
+_title: typescript_advanced_types
+desc: Comprehensive guidance for mastering TypeScript's advanced type system including generics, conditional types, mapped types, template literal types, and utility types for building robust, type-safe applications.
+when_to_use_this_skill:
+  [8]:
+    - Building type-safe libraries or frameworks
+    - Creating reusable generic components
+    - Implementing complex type inference logic
+    - Designing type-safe API clients
+    - Building form validation systems
+    - Creating strongly-typed configuration objects
+    - Implementing type-safe state management
+    - Migrating JavaScript codebases to TypeScript
+core_concepts:
+  1_generics:
+    _desc: "Purpose: Create reusable, type-flexible components while maintaining type safety.. Basic Generic Function:. Generic Constraints:. Multiple Type Parameters:"
+    code[6]:
+      - "function identity<T>(value: T): T {"
+      - return value;
+      - "}"
+      - "const num = identity<number>(42); // Type: number"
+      - "const str = identity<string>(\"hello\"); // Type: string"
+      - "const auto = identity(true); // Type inferred: boolean"
+    code[11]:
+      - "interface HasLength {"
+      - "length: number;"
+      - "}"
+      - "function logLength<T extends HasLength>(item: T): T {"
+      - console.log(item.length);
+      - return item;
+      - "}"
+      - "logLength(\"hello\"); // OK: string has length"
+      - "logLength([1, 2, 3]); // OK: array has length"
+      - "logLength({ length: 10 }); // OK: object has length"
+      - "// logLength(42);             // Error: number has no length"
+    code[5]: "function merge<T, U>(obj1: T, obj2: U): T & U {","return { ...obj1, ...obj2 };","}","const merged = merge({ name: \"John\" }, { age: 30 });","// Type: { name: string } & { age: number }"
+  2_conditional_types:
+    _desc: "Purpose: Create types that depend on conditions, enabling sophisticated type logic.. Basic Conditional Type:. Extracting Return Types:. Distributive Conditional Types:. Nested Conditions:"
+    code[3]: "type IsString<T> = T extends string ? true : false;",type A = IsString<string>; // true,type B = IsString<number>; // false
+    code[6]:
+      - "type ReturnType<T> = T extends (...args: any[]) => infer R ? R : never;"
+      - "function getUser() {"
+      - "return { id: 1, name: \"John\" };"
+      - "}"
+      - type User = ReturnType<typeof getUser>;
+      - "// Type: { id: number; name: string; }"
+    code[3]: "type ToArray<T> = T extends any ? T[] : never;",type StrOrNumArray = ToArray<string | number>;,"// Type: string[] | number[]"
+    code[13]:
+      - type TypeName<T> = T extends string
+      - "? \"string\""
+      - ": T extends number"
+      - "? \"number\""
+      - ": T extends boolean"
+      - "? \"boolean\""
+      - ": T extends undefined"
+      - "? \"undefined\""
+      - ": T extends Function"
+      - "? \"function\""
+      - ": \"object\";"
+      - "type T1 = TypeName<string>; // \"string\""
+      - "type T2 = TypeName<() => void>; // \"function\""
+  3_mapped_types:
+    _desc: "Purpose: Transform existing types by iterating over their properties.. Basic Mapped Type:. Optional Properties:. Key Remapping:. Filtering Properties:"
+    code[9]:
+      - "type Readonly<T> = {"
+      - "readonly [P in keyof T]: T[P];"
+      - "};"
+      - "interface User {"
+      - "id: number;"
+      - "name: string;"
+      - "}"
+      - type ReadonlyUser = Readonly<User>;
+      - "// Type: { readonly id: number; readonly name: string; }"
+    code[5]: "type Partial<T> = {","[P in keyof T]?: T[P];","};",type PartialUser = Partial<User>;,"// Type: { id?: number; name?: string; }"
+    code[9]:
+      - "type Getters<T> = {"
+      - "[K in keyof T as `get${Capitalize<string & K>}`]: () => T[K];"
+      - "};"
+      - "interface Person {"
+      - "name: string;"
+      - "age: number;"
+      - "}"
+      - type PersonGetters = Getters<Person>;
+      - "// Type: { getName: () => string; getAge: () => number; }"
+    code[11]:
+      - "type PickByType<T, U> = {"
+      - "[K in keyof T as T[K] extends U ? K : never]: T[K];"
+      - "};"
+      - "interface Mixed {"
+      - "id: number;"
+      - "name: string;"
+      - "age: number;"
+      - "active: boolean;"
+      - "}"
+      - type OnlyNumbers = PickByType<Mixed, number>;
+      - "// Type: { id: number; age: number; }"
+  4_template_literal_types:
+    _desc: "Purpose: Create string-based types with pattern matching and transformation.. Basic Template Literal:. String Manipulation:. Path Building:"
+    code[3]: "type EventName = \"click\" | \"focus\" | \"blur\";","type EventHandler = `on${Capitalize<EventName>}`;","// Type: \"onClick\" | \"onFocus\" | \"onBlur\""
+    code[4]: "type UppercaseGreeting = Uppercase<\"hello\">; // \"HELLO\"","type LowercaseGreeting = Lowercase<\"HELLO\">; // \"hello\"","type CapitalizedName = Capitalize<\"john\">; // \"John\"","type UncapitalizedName = Uncapitalize<\"John\">; // \"john\""
+    code[16]:
+      - type Path<T> = T extends object
+      - "? {"
+      - "[K in keyof T]: K extends string ? `${K}` | `${K}.${Path<T[K]>}` : never;"
+      - "}[keyof T]"
+      - ": never;"
+      - "interface Config {"
+      - "server: {"
+      - "host: string;"
+      - "port: number;"
+      - "};"
+      - "database: {"
+      - "url: string;"
+      - "};"
+      - "}"
+      - type ConfigPath = Path<Config>;
+      - "// Type: \"server\" | \"database\" | \"server.host\" | \"server.port\" | \"database.url\""
+  5_utility_types:
+    _desc: "Built-in Utility Types:"
+detailed_worked_examples_and_patterns: Detailed sections (starting with ## Advanced Patterns) live in references/details.md. Read that file when the navigation summary above is insufficient.
+best_practices:
+  _desc: "1. Use unknown over any: Enforce type checking. 2. Prefer interface for object shapes: Better error messages. 3. Use type for unions and complex types: More flexible. 4. Leverage type inference: Let TypeScript infer when possible. 5. Create helper types: Build reusable type utilities. 6. Use cons..."
+type_testing:
+  code[13]:
+    - // Type assertion tests
+    - "type AssertEqual<T, U> = [T] extends [U]"
+    - "? [U] extends [T]"
+    - ? true
+    - ": false"
+    - ": false;"
+    - type Test1 = AssertEqual<string, string>; // true
+    - type Test2 = AssertEqual<string, number>; // false
+    - type Test3 = AssertEqual<string | number, string>; // false
+    - // Expect error helper
+    - type ExpectError<T extends never> = T;
+    - // Example usage
+    - type ShouldError = ExpectError<AssertEqual<string, number>>;
+common_pitfalls:
+  _desc: "1. Over-using any: Defeats the purpose of TypeScript. 2. Ignoring strict null checks: Can lead to runtime errors. 3. Too complex types: Can slow down compilation. 4. Not using discriminated unions: Misses type narrowing opportunities. 5. Forgetting readonly modifiers: Allows unintended mutations...."
+performance_considerations:
+  [5]: Avoid deeply nested conditional types,Use simple types when possible,Cache complex type computations,Limit recursion depth in recursive types,Use build tools to skip type checking in production

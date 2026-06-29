@@ -1,0 +1,3 @@
+# DSI — auto-generated from Markdown. DO NOT edit.
+_title: this_is_not_the_nextjs_you_know
+desc: This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in node_modules/next/dist/docs/ before writing any code. Heed deprecation notices.

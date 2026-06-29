@@ -33,11 +33,36 @@ export default async function DashboardPage() {
     .eq('fecha_operacion', today)
     .neq('estado', 'cancelado')
 
+  // Obtener otros perfiles de la red para destinos
+  const { data: perfilesRed } = await supabase
+    .from('perfiles')
+    .select('id, nombre_organizacion, tipo_entidad, direccion_fisica')
+
+  // Obtener solicitudes de recursos activas
+  const { data: solicitudes } = await supabase
+    .from('solicitudes_recursos')
+    .select('*, perfiles(nombre_organizacion, nombre_contacto, whatsapp)')
+    .order('creado_en', { ascending: false })
+
+  // Obtener despachos intermedios activos
+  const { data: despachosIntermedios } = await supabase
+    .from('despachos_intermedios')
+    .select(`
+      *,
+      perfil_origen:origen_id(nombre_organizacion, nombre_contacto, whatsapp),
+      perfil_destino:destino_perfil_id(nombre_organizacion, nombre_contacto, whatsapp, direccion_fisica),
+      nodo_destino:destino_nodo_id(nombre_nodo)
+    `)
+    .order('fecha_salida', { ascending: false })
+
   return (
     <DashboardClient
       perfil={perfil}
       nodos={nodos ?? []}
       despachosHoy={despachosHoy ?? []}
+      perfilesRed={perfilesRed ?? []}
+      solicitudesIniciales={solicitudes ?? []}
+      despachosIntermediosIniciales={despachosIntermedios ?? []}
     />
   )
 }

@@ -3,12 +3,27 @@ export type BloquesTiempo = 'mañana' | 'tarde' | 'noche'
 export type EstadoDespacho = 'transito' | 'completado' | 'cancelado'
 export type NivelUrgencia = 'verde' | 'amarillo' | 'rojo'
 
+export type TipoEntidad = 'centro_acopio' | 'ong' | 'refugio' | 'hospital' | 'otro'
+export type TipoRacion = 'comida_bebida' | 'solo_comida' | 'ninguno'
+export type TipoSolicitud = 'entrega' | 'recogida'
+export type EstadoSolicitud = 'pendiente' | 'atendida' | 'cancelada'
+export type EstadoEnvio = 'preparacion' | 'camino' | 'entregado' | 'desviado'
+
 export interface Perfil {
   id: string
   nombre_organizacion: string
+  nombre_contacto: string | null
   rol: RolUsuario
   telefono_contacto: string | null
+  whatsapp?: string | null
+  sms?: string | null
   terminos_aceptados: boolean
+  tipo_entidad: TipoEntidad
+  direccion_fisica: string | null
+  capacidad_hospedaje: number
+  capacidad_salud_camas: number
+  capacidad_raciones_diarias: number
+  tipo_racion: TipoRacion
   creado_en: string
   actualizado_en: string
 }
@@ -55,6 +70,36 @@ export interface ReporteTereno {
   emergencia_medica: boolean
   observacion_urgente: string | null
   creado_en: string
+}
+
+export interface SolicitudRecurso {
+  id: string
+  solicitante_id: string
+  tipo_insumo: string
+  cantidad_solicitada: number
+  tipo_solicitud: TipoSolicitud
+  estado: EstadoSolicitud
+  descripcion: string | null
+  creado_en: string
+  actualizado_en: string
+  perfiles?: Perfil
+}
+
+export interface DespachoIntermedio {
+  id: string
+  origen_id: string
+  destino_perfil_id: string | null
+  destino_nodo_id: string | null
+  tipo_insumo: string
+  cantidad: number
+  estado_envio: EstadoEnvio
+  whatsapp_chofer: string | null
+  fecha_salida: string
+  fecha_entrega: string | null
+  creado_en: string
+  perfil_origen?: Perfil
+  perfil_destino?: Perfil
+  nodo_destino?: NodoGeografico
 }
 
 // Tipo compuesto para el Libro Mayor (dashboard)
@@ -108,6 +153,23 @@ export type Database = {
         }
         Update: Partial<Omit<ReporteTereno, 'id' | 'creado_en'>>
       }
+      solicitudes_recursos: {
+        Row: SolicitudRecurso
+        Insert: Omit<SolicitudRecurso, 'id' | 'creado_en' | 'actualizado_en'> & {
+          id?: string
+          creado_en?: string
+          actualizado_en?: string
+        }
+        Update: Partial<Omit<SolicitudRecurso, 'id' | 'creado_en'>>
+      }
+      despachos_intermedios: {
+        Row: DespachoIntermedio
+        Insert: Omit<DespachoIntermedio, 'id' | 'creado_en'> & {
+          id?: string
+          creado_en?: string
+        }
+        Update: Partial<Omit<DespachoIntermedio, 'id' | 'creado_en'>>
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -116,6 +178,11 @@ export type Database = {
       bloque_tiempo: BloquesTiempo
       estado_despacho: EstadoDespacho
       nivel_urgencia: NivelUrgencia
+      tipo_entidad: TipoEntidad
+      tipo_racion: TipoRacion
+      tipo_solicitud: TipoSolicitud
+      estado_solicitud: EstadoSolicitud
+      estado_envio: EstadoEnvio
     }
   }
 }

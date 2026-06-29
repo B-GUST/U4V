@@ -22,6 +22,12 @@ const RegistroSchema = z.object({
   sms: z.string().regex(phoneRegex, {
     message: "El teléfono SMS debe tener formato internacional numérico (ej: +584121234567) sin espacios ni letras."
   }),
+  tipo_entidad: z.enum(['centro_acopio', 'ong', 'refugio', 'hospital', 'otro']),
+  direccion_fisica: z.string().min(5, "La dirección física debe ser más descriptiva").trim(),
+  capacidad_hospedaje: z.number().int().min(0).default(0),
+  capacidad_salud_camas: z.number().int().min(0).default(0),
+  capacidad_raciones_diarias: z.number().int().min(0).default(0),
+  tipo_racion: z.enum(['comida_bebida', 'solo_comida', 'ninguno']).default('ninguno'),
 })
 
 function createServiceClient() {
@@ -43,7 +49,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: errorMsg }, { status: 400 })
     }
 
-    const { nombre_organizacion, nombre_contacto, email, password, whatsapp, sms } = result.data
+    const { 
+      nombre_organizacion, 
+      nombre_contacto, 
+      email, 
+      password, 
+      whatsapp, 
+      sms,
+      tipo_entidad,
+      direccion_fisica,
+      capacidad_hospedaje,
+      capacidad_salud_camas,
+      capacidad_raciones_diarias,
+      tipo_racion
+    } = result.data
 
     const supabase = createServiceClient()
 
@@ -87,6 +106,12 @@ export async function POST(request: NextRequest) {
         sms,
         rol: 'primera_linea',
         terminos_aceptados: false,
+        tipo_entidad,
+        direccion_fisica,
+        capacidad_hospedaje,
+        capacidad_salud_camas,
+        capacidad_raciones_diarias,
+        tipo_racion
       })
 
     if (profileError) {

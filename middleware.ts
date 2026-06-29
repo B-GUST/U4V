@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Rutas públicas — no requieren autenticación
-  const publicRoutes = ['/login', '/reporte', '/registro']
+  const publicRoutes = ['/login', '/reporte', '/registro', '/bgust']
   const isPublicRoute = publicRoutes.some((r) => pathname.startsWith(r))
 
   // Si no está autenticado y quiere acceder al dashboard → login

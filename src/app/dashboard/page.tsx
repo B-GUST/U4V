@@ -36,15 +36,15 @@ export default async function DashboardPage() {
   // Obtener otros perfiles de la red para destinos
   const { data: perfilesRed } = await supabase
     .from('perfiles')
-    .select('id, nombre_organizacion, tipo_entidad, direccion_fisica')
+    .select('id, nombre_organizacion, tipo_entidad, direccion_fisica, vacantes_disponibles, instagram')
 
-  // Obtener solicitudes de recursos activas
+  // Obtener solicitudes de recursos activas con sus postulaciones
   const { data: solicitudes } = await supabase
     .from('solicitudes_recursos')
-    .select('*, perfiles(nombre_organizacion, nombre_contacto, whatsapp)')
+    .select('*, perfiles(nombre_organizacion, nombre_contacto, whatsapp, instagram, direccion_fisica, tipo_entidad), postulaciones:postulaciones_solicitudes(*, voluntario_perfil:perfiles(nombre_organizacion, whatsapp))')
     .order('creado_en', { ascending: false })
 
-  // Obtener despachos intermedios activos
+  // Obtener despachos intermedios activos (con espacio de carga / transporte compartido)
   const { data: despachosIntermedios } = await supabase
     .from('despachos_intermedios')
     .select(`
@@ -55,6 +55,18 @@ export default async function DashboardPage() {
     `)
     .order('fecha_salida', { ascending: false })
 
+  // Obtener reportes de incidencias activos en zonas
+  const { data: incidencias } = await supabase
+    .from('reportes_incidencias')
+    .select('*, perfil_autor:autor_id(nombre_organizacion), nodo:nodo_id(nombre_nodo)')
+    .order('creado_en', { ascending: false })
+
+  // Obtener cola de traslados hospitalarios a refugios
+  const { data: traslados } = await supabase
+    .from('traslados_pacientes')
+    .select('*, hospital_perfil:hospital_id(nombre_organizacion, nombre_contacto, whatsapp), refugio_perfil:refugio_id(nombre_organizacion)')
+    .order('creado_en', { ascending: false })
+
   return (
     <DashboardClient
       perfil={perfil}
@@ -63,6 +75,8 @@ export default async function DashboardPage() {
       perfilesRed={perfilesRed ?? []}
       solicitudesIniciales={solicitudes ?? []}
       despachosIntermediosIniciales={despachosIntermedios ?? []}
+      incidenciasIniciales={incidencias ?? []}
+      trasladosIniciales={traslados ?? []}
     />
   )
 }

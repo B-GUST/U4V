@@ -17,6 +17,7 @@ export default function RegistroPage() {
     password: '',
     whatsapp: '',
     sms: '',
+    instagram: '',
     tipo_entidad: 'ong',
     direccion_fisica: '',
     capacidad_hospedaje: 0,
@@ -265,7 +266,7 @@ export default function RegistroPage() {
                 {/* 3. Contacto Logístico (Notificaciones) */}
                 <div className="space-y-3 pt-2 border-t border-white/5">
                   <h3 className="text-xs font-bold text-teal-400 uppercase tracking-wider">3. Enlaces de Comunicación</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-1">
                       <Label htmlFor="whatsapp" className="text-xs font-medium text-zinc-300">
                         WhatsApp de Coordinación
@@ -283,7 +284,7 @@ export default function RegistroPage() {
 
                     <div className="space-y-1">
                       <Label htmlFor="sms" className="text-xs font-medium text-zinc-300">
-                        Teléfono para SMS urgentes
+                        Teléfono SMS Urgente
                       </Label>
                       <Input
                         id="sms"
@@ -292,6 +293,20 @@ export default function RegistroPage() {
                         value={formData.sms}
                         onChange={handleChange}
                         required
+                        className="bg-white/5 border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10 text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label htmlFor="instagram" className="text-xs font-medium text-zinc-300">
+                        Usuario Instagram
+                      </Label>
+                      <Input
+                        id="instagram"
+                        type="text"
+                        placeholder="@ong_rescate"
+                        value={formData.instagram}
+                        onChange={handleChange}
                         className="bg-white/5 border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10 text-sm"
                       />
                     </div>
@@ -373,6 +388,11 @@ export default function RegistroPage() {
                       </div>
                     )}
                   </div>
+                </div>
+
+                {/* Disclaimer */}
+                <div className="p-3 bg-white/5 border border-white/5 rounded-xl text-[10px] text-zinc-400 leading-snug">
+                  🛡️ <strong className="text-zinc-300">Descargo de Responsabilidad:</strong> Al registrarte, aceptas que tu nombre de contacto, número telefónico e Instagram serán visibles para otros miembros de U4V con el fin exclusivo de facilitar la vinculación logística mutua y directa, eliminando intermediarios.
                 </div>
 
                 {error && (

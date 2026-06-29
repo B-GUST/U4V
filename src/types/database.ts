@@ -9,6 +9,10 @@ export type TipoSolicitud = 'entrega' | 'recogida'
 export type EstadoSolicitud = 'pendiente' | 'atendida' | 'cancelada'
 export type EstadoEnvio = 'preparacion' | 'camino' | 'entregado' | 'desviado'
 
+export type CategoriaInsumo = 'comida' | 'agua' | 'ropa' | 'medicamentos' | 'voluntarios'
+export type TipoIncidencia = 'transito_bloqueado' | 'sobrecarga_recursos' | 'sobrecarga_personas' | 'otro'
+export type EstadoTraslado = 'pendiente' | 'asignado' | 'completado'
+
 export interface Perfil {
   id: string
   nombre_organizacion: string
@@ -17,6 +21,7 @@ export interface Perfil {
   telefono_contacto: string | null
   whatsapp?: string | null
   sms?: string | null
+  instagram?: string | null
   terminos_aceptados: boolean
   tipo_entidad: TipoEntidad
   direccion_fisica: string | null
@@ -24,6 +29,7 @@ export interface Perfil {
   capacidad_salud_camas: number
   capacidad_raciones_diarias: number
   tipo_racion: TipoRacion
+  vacantes_disponibles: number
   creado_en: string
   actualizado_en: string
 }
@@ -37,6 +43,9 @@ export interface NodoGeografico {
   deficit_diario_agua_litros: number
   semaforo_medico: NivelUrgencia
   activo: boolean
+  direccion: string | null
+  punto_referencia: string | null
+  creador_id: string | null
   ultima_actualizacion: string
   creado_en: string
 }
@@ -80,9 +89,12 @@ export interface SolicitudRecurso {
   tipo_solicitud: TipoSolicitud
   estado: EstadoSolicitud
   descripcion: string | null
+  categoria: CategoriaInsumo
+  cantidad_atendida: number
   creado_en: string
   actualizado_en: string
   perfiles?: Perfil
+  postulaciones?: PostulacionSolicitud[]
 }
 
 export interface DespachoIntermedio {
@@ -97,9 +109,47 @@ export interface DespachoIntermedio {
   fecha_salida: string
   fecha_entrega: string | null
   creado_en: string
+  capacidad_carga_disponible?: string | null
+  capacidad_voluntarios_disponible?: number
+  punto_encuentro?: string | null
+  hora_salida?: string | null
   perfil_origen?: Perfil
   perfil_destino?: Perfil
   nodo_destino?: NodoGeografico
+}
+
+export interface PostulacionSolicitud {
+  id: string
+  solicitud_id: string
+  voluntario_id: string
+  cantidad_ofrecida: number
+  estado: EstadoSolicitud
+  creado_en: string
+  voluntario_perfil?: Perfil
+}
+
+export interface ReporteIncidencia {
+  id: string
+  nodo_id: string
+  autor_id: string
+  tipo_incidencia: TipoIncidencia
+  descripcion: string
+  creado_en: string
+  perfil_autor?: Perfil
+  nodo?: NodoGeografico
+}
+
+export interface TrasladoPaciente {
+  id: string
+  hospital_id: string
+  refugio_id: string | null
+  cantidad_personas: number
+  observaciones: string | null
+  estado: EstadoTraslado
+  creado_en: string
+  actualizado_en: string
+  hospital_perfil?: Perfil
+  refugio_perfil?: Perfil
 }
 
 // Tipo compuesto para el Libro Mayor (dashboard)
@@ -170,6 +220,31 @@ export type Database = {
         }
         Update: Partial<Omit<DespachoIntermedio, 'id' | 'creado_en'>>
       }
+      postulaciones_solicitudes: {
+        Row: PostulacionSolicitud
+        Insert: Omit<PostulacionSolicitud, 'id' | 'creado_en'> & {
+          id?: string
+          creado_en?: string
+        }
+        Update: Partial<Omit<PostulacionSolicitud, 'id' | 'creado_en'>>
+      }
+      reportes_incidencias: {
+        Row: ReporteIncidencia
+        Insert: Omit<ReporteIncidencia, 'id' | 'creado_en'> & {
+          id?: string
+          creado_en?: string
+        }
+        Update: Partial<Omit<ReporteIncidencia, 'id' | 'creado_en'>>
+      }
+      traslados_pacientes: {
+        Row: TrasladoPaciente
+        Insert: Omit<TrasladoPaciente, 'id' | 'creado_en' | 'actualizado_en'> & {
+          id?: string
+          creado_en?: string
+          actualizado_en?: string
+        }
+        Update: Partial<Omit<TrasladoPaciente, 'id' | 'creado_en'>>
+      }
     }
     Views: Record<string, never>
     Functions: Record<string, never>
@@ -183,6 +258,9 @@ export type Database = {
       tipo_solicitud: TipoSolicitud
       estado_solicitud: EstadoSolicitud
       estado_envio: EstadoEnvio
+      categoria_insumo: CategoriaInsumo
+      tipo_incidencia: TipoIncidencia
+      estado_traslado: EstadoTraslado
     }
   }
 }

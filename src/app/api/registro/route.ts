@@ -28,6 +28,7 @@ const RegistroSchema = z.object({
   capacidad_salud_camas: z.number().int().min(0).default(0),
   capacidad_raciones_diarias: z.number().int().min(0).default(0),
   tipo_racion: z.enum(['comida_bebida', 'solo_comida', 'ninguno']).default('ninguno'),
+  instagram: z.string().optional().nullable(),
 })
 
 function createServiceClient() {
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
       password, 
       whatsapp, 
       sms,
+      instagram,
       tipo_entidad,
       direccion_fisica,
       capacidad_hospedaje,
@@ -104,6 +106,7 @@ export async function POST(request: NextRequest) {
         nombre_contacto,
         whatsapp,
         sms,
+        instagram: instagram || null,
         rol: 'primera_linea',
         terminos_aceptados: false,
         tipo_entidad,

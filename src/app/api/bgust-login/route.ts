@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
     const result = LoginSchema.safeParse(body)
     
     if (!result.success) {
+      console.warn('[LOGIN DEBUG] Zod validation failed:', result.error.issues)
       recordFailedAttempt(ip)
       return NextResponse.json({ error: 'Credenciales de acceso incorrectas.' }, { status: 401 })
     }
@@ -29,17 +30,20 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
 
     // 2. Intentar autenticación
+    console.log('[LOGIN DEBUG] Attempting Supabase signInWithPassword for:', email)
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
       email,
       password
     })
 
     if (authError || !authData.user) {
+      console.warn('[LOGIN DEBUG] Supabase auth failed:', authError?.message || 'No user data')
       recordFailedAttempt(ip)
       return NextResponse.json({ error: 'Credenciales de acceso incorrectas.' }, { status: 401 })
     }
 
     // 3. Validar Rol Admin (Zero Trust)
+    console.log('[LOGIN DEBUG] Supabase auth succeeded. Fetching profile for user ID:', authData.user.id)
     const { data: perfil, error: perfilError } = await supabase
       .from('perfiles')
       .select('rol')
@@ -47,11 +51,14 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (perfilError || !perfil || perfil.rol !== 'admin') {
+      console.warn('[LOGIN DEBUG] Profile check failed or user is not admin:', { perfilError, perfil })
       // Cerrar sesión inmediatamente si el rol no es admin
       await supabase.auth.signOut()
       recordFailedAttempt(ip)
       return NextResponse.json({ error: 'Credenciales de acceso incorrectas.' }, { status: 401 })
     }
+
+    console.log('[LOGIN DEBUG] Login successful for admin:', email)
 
     // 4. Éxito: limpiar registro de bloqueos para esta IP
     resetAttempts(ip)

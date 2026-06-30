@@ -1,9 +1,0 @@
-{
-  "mcpServers": {
-    "aiyoucli": {
-      "command": "aiyoucli-mcp",
-      "args": [],
-      "env": {}
-    }
-  }
-}

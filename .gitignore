@@ -24,6 +24,7 @@ CLAUDE.md
 GEMINI.md
 skills-lock.json
 .aiyoucli/
+.claude/
 
 # typescript build cache
 *.tsbuildinfo

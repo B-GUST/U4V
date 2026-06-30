@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Chart, registerables } from 'chart.js'
 import type { Perfil, NodoGeografico, DespachoIntermedio, TrasladoPaciente } from '@/types/database'
 import { Button } from '@/components/ui/button'
+import { calcularPuntosCercania } from '@/lib/proximity'
 
 Chart.register(...registerables)
 
@@ -35,27 +36,10 @@ export function PredictiveAnalytics({
   // 1. Calcular acopios más cercanos por distancia topológica/parroquial
   const acopiosCercanos = perfilesRed
     .filter(p => p.id !== perfilActual.id && (p.tipo_entidad === 'centro_acopio' || p.tipo_entidad === 'ong'))
-    .map(p => {
-      let score = 0
-      
-      // Comparar estructura de dirección estandarizada con granularidad fina
-      if (p.estado && perfilActual.estado && p.estado.trim().toLowerCase() === perfilActual.estado.trim().toLowerCase()) {
-        score += 20
-        if (p.municipio && perfilActual.municipio && p.municipio.trim().toLowerCase() === perfilActual.municipio.trim().toLowerCase()) {
-          score += 20
-          if (p.parroquia && perfilActual.parroquia && p.parroquia.trim().toLowerCase() === perfilActual.parroquia.trim().toLowerCase()) {
-            score += 20
-            if (p.sector && perfilActual.sector && p.sector.trim().toLowerCase() === perfilActual.sector.trim().toLowerCase()) {
-              score += 20
-              if (p.urbanizacion_residencia && perfilActual.urbanizacion_residencia && p.urbanizacion_residencia.trim().toLowerCase() === perfilActual.urbanizacion_residencia.trim().toLowerCase()) {
-                score += 20
-              }
-            }
-          }
-        }
-      }
-      return { perfil: p, score }
-    })
+    .map(p => ({
+      perfil: p,
+      score: calcularPuntosCercania(perfilActual, p)
+    }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 5)
 

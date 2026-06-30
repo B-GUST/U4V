@@ -13,6 +13,12 @@ export const metadata: Metadata = {
   description:
     'Plataforma de coordinación logística post-rescate. Coordina la oferta y demanda de ayuda humanitaria en tiempo real, evitando la sobresaturación de zonas afectadas.',
   keywords: ['logística', 'emergencia', 'Venezuela', 'ayuda humanitaria', 'coordinación'],
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'U4V Logística',
+  },
 }
 
 export default function RootLayout({
@@ -22,6 +28,23 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className="dark" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(function(reg) {
+                    console.log('ServiceWorker registration successful');
+                  }).catch(function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                  });
+                });
+              }
+            `,
+          }}
+        />
+      </head>
       <body className={`${inter.variable} font-sans`}>
         {children}
       </body>

@@ -1,0 +1,18 @@
+{
+  "name": "Unidos por Venezuela",
+  "short_name": "U4V",
+  "description": "Sistema Operativo de Logística y Auxilio Civil Post-Rescate (Sismo 2026)",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#14b8a6",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

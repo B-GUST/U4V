@@ -38,13 +38,19 @@ export function PredictiveAnalytics({
     .map(p => {
       let score = 0
       
-      // Comparar estructura de dirección estandarizada
+      // Comparar estructura de dirección estandarizada con granularidad fina
       if (p.estado && perfilActual.estado && p.estado.trim().toLowerCase() === perfilActual.estado.trim().toLowerCase()) {
-        score += 40
+        score += 20
         if (p.municipio && perfilActual.municipio && p.municipio.trim().toLowerCase() === perfilActual.municipio.trim().toLowerCase()) {
-          score += 30
+          score += 20
           if (p.parroquia && perfilActual.parroquia && p.parroquia.trim().toLowerCase() === perfilActual.parroquia.trim().toLowerCase()) {
-            score += 30
+            score += 20
+            if (p.sector && perfilActual.sector && p.sector.trim().toLowerCase() === perfilActual.sector.trim().toLowerCase()) {
+              score += 20
+              if (p.urbanizacion_residencia && perfilActual.urbanizacion_residencia && p.urbanizacion_residencia.trim().toLowerCase() === perfilActual.urbanizacion_residencia.trim().toLowerCase()) {
+                score += 20
+              }
+            }
           }
         }
       }
@@ -72,9 +78,14 @@ export function PredictiveAnalytics({
   const personasRehospedadas = traslados
     .filter(t => (t.estado === 'asignado' || t.estado === 'completado') && t.refugio_id)
     .filter(t => {
-      // Cruzar el refugio_id con los perfiles de la red para ver si coincide la parroquia o municipio
       const refugio = perfilesRed.find(p => p.id === t.refugio_id)
-      return refugio?.municipio === nodoData?.municipio
+      if (!refugio || !nodoData) return false
+      return (
+        (refugio.urbanizacion_residencia && refugio.urbanizacion_residencia.trim().toLowerCase() === nodoData.urbanizacion_residencia?.trim().toLowerCase()) ||
+        (refugio.sector && refugio.sector.trim().toLowerCase() === nodoData.sector?.trim().toLowerCase()) ||
+        (refugio.parroquia && refugio.parroquia.trim().toLowerCase() === nodoData.parroquia?.trim().toLowerCase()) ||
+        (refugio.municipio && refugio.municipio.trim().toLowerCase() === nodoData.municipio?.trim().toLowerCase())
+      )
     })
     .reduce((sum, t) => sum + (t.cantidad_personas || 0), 0)
 
@@ -261,11 +272,15 @@ export function PredictiveAnalytics({
               </thead>
               <tbody className="divide-y divide-white/5 text-zinc-300">
                 {acopiosCercanos.map(({ perfil: p, score }) => (
-                  <tr key={p.id} className="hover:bg-white/5">
+                   <tr key={p.id} className="hover:bg-white/5">
                     <td className="py-2.5 font-semibold text-white">{p.nombre_organizacion}</td>
-                    <td className="py-2.5 text-zinc-400">{p.parroquia}, {p.municipio}</td>
+                    <td className="py-2.5 text-zinc-400">
+                      {p.urbanizacion_residencia ? `${p.urbanizacion_residencia}, ` : ''}
+                      {p.sector ? `${p.sector}, ` : ''}
+                      {p.parroquia}, {p.municipio}
+                    </td>
                     <td className="py-2.5 text-right font-bold text-teal-300">
-                      {score >= 100 ? 'Misma Parroquia' : score >= 70 ? 'Mismo Municipio' : score >= 40 ? 'Mismo Estado' : 'Diferente Región'}
+                      {score >= 100 ? 'Misma Urb/Res' : score >= 80 ? 'Mismo Sector' : score >= 60 ? 'Misma Parroquia' : score >= 40 ? 'Mismo Municipio' : score >= 20 ? 'Mismo Estado' : 'Diferente Región'}
                     </td>
                   </tr>
                 ))}

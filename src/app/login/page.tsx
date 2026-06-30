@@ -36,7 +36,7 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-4 relative bg-cover bg-center" style={{ backgroundImage: "url('/vzla.jpg')" }}>
+    <div className="min-h-dvh flex items-center justify-center p-4 relative bg-cover bg-center" style={{ backgroundImage: "url('/vzla.webp')" }}>
       {/* Capa de overlay oscuro/teal sobre la imagen */}
       <div className="absolute inset-0 bg-zinc-950/85 backdrop-blur-xs pointer-events-none" />
 

@@ -6,7 +6,13 @@ import { registrarAuditoria } from '@/lib/audit'
 const ZonaSchema = z.object({
   nombre_nodo: z.string().min(3, "El nombre de la zona debe tener al menos 3 caracteres").max(100).trim(),
   descripcion: z.string().optional().nullable(),
-  direccion: z.string().min(5, "La dirección debe ser descriptiva").trim(),
+  estado: z.string().min(2, "El estado es requerido").trim(),
+  ciudad: z.string().min(2, "La ciudad es requerida").trim(),
+  municipio: z.string().min(2, "El municipio es requerido").trim(),
+  parroquia: z.string().min(2, "La parroquia es requerida").trim(),
+  sector: z.string().min(2, "El sector es requerido").trim(),
+  urbanizacion_residencia: z.string().min(2, "La urbanización o residencia es requerida").trim(),
+  calle_casa: z.string().min(2, "La calle/av/casa/apto es requerida").trim(),
   punto_referencia: z.string().min(3, "El punto de referencia debe ser más claro").trim()
 })
 
@@ -14,8 +20,14 @@ const EditZonaSchema = z.object({
   id: z.string().uuid(),
   nombre_nodo: z.string().min(3, "El nombre de la zona debe tener al menos 3 caracteres").max(100).trim().optional(),
   descripcion: z.string().optional().nullable(),
-  direccion: z.string().min(5, "La dirección debe ser descriptiva").trim().optional(),
-  punto_referencia: z.string().min(3, "El punto de referencia debe ser más claro").trim().optional()
+  estado: z.string().min(2).trim().optional(),
+  ciudad: z.string().min(2).trim().optional(),
+  municipio: z.string().min(2).trim().optional(),
+  parroquia: z.string().min(2).trim().optional(),
+  sector: z.string().min(2).trim().optional(),
+  urbanizacion_residencia: z.string().min(2).trim().optional(),
+  calle_casa: z.string().min(2).trim().optional(),
+  punto_referencia: z.string().min(3).trim().optional()
 })
 
 export async function GET() {
@@ -50,7 +62,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.error.issues.map(e => e.message).join('. ') }, { status: 400 })
     }
 
-    const { nombre_nodo, descripcion, direccion, punto_referencia } = result.data
+    const { nombre_nodo, descripcion, estado, ciudad, municipio, parroquia, sector, urbanizacion_residencia, calle_casa, punto_referencia } = result.data
+    const direccion = `${calle_casa}, ${urbanizacion_residencia}, Sector ${sector}, Parroquia ${parroquia}, Municipio ${municipio}, ${ciudad}, Estado ${estado}`
 
     // Verificar si ya existe una zona con ese nombre
     const { data: existe } = await supabase
@@ -70,6 +83,13 @@ export async function POST(request: NextRequest) {
         descripcion,
         direccion,
         punto_referencia,
+        estado,
+        ciudad,
+        municipio,
+        parroquia,
+        sector,
+        urbanizacion_residencia,
+        calle_casa,
         poblacion_estimada: 0,
         deficit_diario_raciones: 0,
         deficit_diario_agua_litros: 0,

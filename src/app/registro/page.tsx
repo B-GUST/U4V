@@ -23,6 +23,8 @@ export default function RegistroPage() {
     ciudad: '',
     municipio: '',
     parroquia: '',
+    sector: '',
+    urbanizacion_residencia: '',
     calle_casa: '',
     punto_referencia: '',
     capacidad_hospedaje: 0,
@@ -57,6 +59,8 @@ export default function RegistroPage() {
     if (formData.ciudad.trim().length < 2) return "La Ciudad es requerida."
     if (formData.municipio.trim().length < 2) return "El Municipio es requerido."
     if (formData.parroquia.trim().length < 2) return "La Parroquia es requerida."
+    if (formData.sector.trim().length < 2) return "El Sector es requerido."
+    if (formData.urbanizacion_residencia.trim().length < 2) return "La Urbanización o Residencia es requerida."
     if (formData.calle_casa.trim().length < 2) return "La Calle, Avenida o Casa/Apto es requerida."
     if (formData.punto_referencia.trim().length < 2) return "El Punto de referencia es requerido."
     return null
@@ -270,6 +274,34 @@ export default function RegistroPage() {
                         type="text"
                         placeholder="Ej: El Rosal"
                         value={formData.parroquia}
+                        onChange={handleChange}
+                        required
+                        className="bg-white/5 border-white/10 text-xs focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label htmlFor="sector" className="text-xs font-medium text-zinc-300">Sector</Label>
+                      <Input
+                        id="sector"
+                        type="text"
+                        placeholder="Ej: Campo Alegre"
+                        value={formData.sector}
+                        onChange={handleChange}
+                        required
+                        className="bg-white/5 border-white/10 text-xs focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="urbanizacion_residencia" className="text-xs font-medium text-zinc-300">Urbanización / Residencia</Label>
+                      <Input
+                        id="urbanizacion_residencia"
+                        type="text"
+                        placeholder="Ej: Urb. El Bosque o Res. Avila"
+                        value={formData.urbanizacion_residencia}
                         onChange={handleChange}
                         required
                         className="bg-white/5 border-white/10 text-xs focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10"

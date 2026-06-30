@@ -29,6 +29,8 @@ export interface Perfil {
   ciudad?: string | null
   municipio?: string | null
   parroquia?: string | null
+  sector?: string | null
+  urbanizacion_residencia?: string | null
   calle_casa?: string | null
   punto_referencia?: string | null
   capacidad_hospedaje: number
@@ -55,6 +57,8 @@ export interface NodoGeografico {
   ciudad?: string | null
   municipio?: string | null
   parroquia?: string | null
+  sector?: string | null
+  urbanizacion_residencia?: string | null
   calle_casa?: string | null
   ultimo_reporte_timestamp?: string
   creador_id: string | null

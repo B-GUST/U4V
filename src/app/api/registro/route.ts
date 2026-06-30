@@ -27,6 +27,8 @@ const RegistroSchema = z.object({
   ciudad: z.string().min(2, "La ciudad es requerida").trim(),
   municipio: z.string().min(2, "El municipio es requerido").trim(),
   parroquia: z.string().min(2, "La parroquia es requerida").trim(),
+  sector: z.string().min(2, "El sector es requerido").trim(),
+  urbanizacion_residencia: z.string().min(2, "La urbanización o residencia es requerida").trim(),
   calle_casa: z.string().min(2, "La calle/av/casa/apto es requerida").trim(),
   punto_referencia: z.string().min(2, "El punto de referencia es requerido").trim(),
   capacidad_hospedaje: z.number().int().min(0).default(0),
@@ -68,6 +70,8 @@ export async function POST(request: NextRequest) {
       ciudad,
       municipio,
       parroquia,
+      sector,
+      urbanizacion_residencia,
       calle_casa,
       punto_referencia,
       capacidad_hospedaje,
@@ -76,7 +80,7 @@ export async function POST(request: NextRequest) {
       tipo_racion
     } = result.data
 
-    const direccion_fisica = `${calle_casa}, Parroquia ${parroquia}, Municipio ${municipio}, ${ciudad}, Estado ${estado}`
+    const direccion_fisica = `${calle_casa}, ${urbanizacion_residencia}, Sector ${sector}, Parroquia ${parroquia}, Municipio ${municipio}, ${ciudad}, Estado ${estado}`
 
     const supabase = createServiceClient()
 
@@ -127,6 +131,8 @@ export async function POST(request: NextRequest) {
         ciudad,
         municipio,
         parroquia,
+        sector,
+        urbanizacion_residencia,
         calle_casa,
         punto_referencia,
         capacidad_hospedaje,

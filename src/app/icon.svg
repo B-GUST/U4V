@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Amarillo -->
+  <rect width="32" height="10.66" fill="#FCD116"/>
+  <!-- Azul -->
+  <rect y="10.66" width="32" height="10.66" fill="#003893"/>
+  <!-- Rojo -->
+  <rect y="21.33" width="32" height="10.67" fill="#CF142B"/>
+  <!-- Arco de Estrellas (8 puntos blancos usando stroke-dasharray) -->
+  <path d="M 9,17.2 A 7.5,7.5 0 0 1 23,17.2" fill="none" stroke="#FFFFFF" stroke-width="1.2" stroke-linecap="round" stroke-dasharray="0.1 2.9"/>
+</svg>

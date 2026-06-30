@@ -87,6 +87,8 @@ export function DashboardClient({
     ciudad: perfilInicial.ciudad || '',
     municipio: perfilInicial.municipio || '',
     parroquia: perfilInicial.parroquia || '',
+    sector: perfilInicial.sector || '',
+    urbanizacion_residencia: perfilInicial.urbanizacion_residencia || '',
     calle_casa: perfilInicial.calle_casa || '',
     punto_referencia: perfilInicial.punto_referencia || '',
     capacidad_hospedaje: perfilInicial.capacidad_hospedaje,
@@ -103,9 +105,15 @@ export function DashboardClient({
   const [showCrearZona, setShowCrearZona] = useState(false)
   const [nuevaZonaForm, setNuevaZonaForm] = useState({
     nombre_nodo: '',
-    direccion: '',
+    descripcion: '',
+    estado: '',
+    ciudad: '',
+    municipio: '',
+    parroquia: '',
+    sector: '',
+    urbanizacion_residencia: '',
+    calle_casa: '',
     punto_referencia: '',
-    descripcion: ''
   })
 
   const [showCrearSolicitud, setShowCrearSolicitud] = useState(false)
@@ -216,6 +224,8 @@ export function DashboardClient({
           ciudad: data.ciudad || '',
           municipio: data.municipio || '',
           parroquia: data.parroquia || '',
+          sector: data.sector || '',
+          urbanizacion_residencia: data.urbanizacion_residencia || '',
           calle_casa: data.calle_casa || '',
           punto_referencia: data.punto_referencia || '',
           capacidad_hospedaje: data.capacidad_hospedaje,
@@ -378,7 +388,18 @@ export function DashboardClient({
       })
       if (response.ok) {
         setShowCrearZona(false)
-        setNuevaZonaForm({ nombre_nodo: '', direccion: '', punto_referencia: '', descripcion: '' })
+        setNuevaZonaForm({
+          nombre_nodo: '',
+          descripcion: '',
+          estado: '',
+          ciudad: '',
+          municipio: '',
+          parroquia: '',
+          sector: '',
+          urbanizacion_residencia: '',
+          calle_casa: '',
+          punto_referencia: '',
+        })
         fetchNodos()
       } else {
         const err = await response.json()
@@ -626,11 +647,13 @@ export function DashboardClient({
           nombre_contacto: profileForm.nombre_contacto,
           whatsapp: profileForm.whatsapp,
           instagram: profileForm.instagram || null,
-          direccion_fisica: `${profileForm.calle_casa}, Parroquia ${profileForm.parroquia}, Municipio ${profileForm.municipio}, ${profileForm.ciudad}, Estado ${profileForm.estado}`,
+          direccion_fisica: `${profileForm.calle_casa}, ${profileForm.urbanizacion_residencia}, Sector ${profileForm.sector}, Parroquia ${profileForm.parroquia}, Municipio ${profileForm.municipio}, ${profileForm.ciudad}, Estado ${profileForm.estado}`,
           estado: profileForm.estado,
           ciudad: profileForm.ciudad,
           municipio: profileForm.municipio,
           parroquia: profileForm.parroquia,
+          sector: profileForm.sector,
+          urbanizacion_residencia: profileForm.urbanizacion_residencia,
           calle_casa: profileForm.calle_casa,
           punto_referencia: profileForm.punto_referencia,
           capacidad_hospedaje: Number(profileForm.capacidad_hospedaje),
@@ -1830,6 +1853,34 @@ export function DashboardClient({
                   </div>
 
                   <div className="space-y-1">
+                    <Label htmlFor="prof_sector" className="text-xs text-zinc-300">Sector</Label>
+                    <Input
+                      id="prof_sector"
+                      type="text"
+                      placeholder="Ej: Campo Alegre"
+                      value={profileForm.sector}
+                      onChange={(e) => setProfileForm(p => ({ ...p, sector: e.target.value }))}
+                      required
+                      className="bg-white/5 border-white/10 text-xs focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="prof_urbanizacion_residencia" className="text-xs text-zinc-300">Urbanización / Residencia</Label>
+                    <Input
+                      id="prof_urbanizacion_residencia"
+                      type="text"
+                      placeholder="Ej: Urb. El Bosque o Res. Avila"
+                      value={profileForm.urbanizacion_residencia}
+                      onChange={(e) => setProfileForm(p => ({ ...p, urbanizacion_residencia: e.target.value }))}
+                      required
+                      className="bg-white/5 border-white/10 text-xs focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10"
+                    />
+                  </div>
+
+                  <div className="space-y-1">
                     <Label htmlFor="prof_calle_casa" className="text-xs text-zinc-300">Calle / Av. / Casa / Apto</Label>
                     <Input
                       id="prof_calle_casa"
@@ -2147,14 +2198,109 @@ export function DashboardClient({
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor="zona_estado" className="text-xs text-zinc-300">Estado</Label>
+                  <select
+                    id="zona_estado"
+                    value={nuevaZonaForm.estado}
+                    onChange={(e) => setNuevaZonaForm(p => ({ ...p, estado: e.target.value }))}
+                    className="bg-zinc-900 border border-white/10 text-white rounded-xl h-10 px-2 text-xs w-full focus:border-teal-500"
+                    required
+                  >
+                    <option value="">Selecciona...</option>
+                    <option value="Distrito Capital">Distrito Capital</option>
+                    <option value="Miranda">Miranda</option>
+                    <option value="Aragua">Aragua</option>
+                    <option value="Carabobo">Carabobo</option>
+                    <option value="Zulia">Zulia</option>
+                    <option value="Lara">Lara</option>
+                    <option value="Mérida">Mérida</option>
+                    <option value="Táchira">Táchira</option>
+                    <option value="Bolívar">Bolívar</option>
+                    <option value="Anzoátegui">Anzoátegui</option>
+                    <option value="Otro">Otro Estado</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="zona_ciudad" className="text-xs text-zinc-300">Ciudad</Label>
+                  <Input
+                    id="zona_ciudad"
+                    type="text"
+                    placeholder="Caracas"
+                    value={nuevaZonaForm.ciudad}
+                    onChange={(e) => setNuevaZonaForm(p => ({ ...p, ciudad: e.target.value }))}
+                    required
+                    className="bg-white/5 border-white/10 rounded-xl h-10 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor="zona_municipio" className="text-xs text-zinc-300">Municipio</Label>
+                  <Input
+                    id="zona_municipio"
+                    type="text"
+                    placeholder="Chacao"
+                    value={nuevaZonaForm.municipio}
+                    onChange={(e) => setNuevaZonaForm(p => ({ ...p, municipio: e.target.value }))}
+                    required
+                    className="bg-white/5 border-white/10 rounded-xl h-10 text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="zona_parroquia" className="text-xs text-zinc-300">Parroquia</Label>
+                  <Input
+                    id="zona_parroquia"
+                    type="text"
+                    placeholder="El Rosal"
+                    value={nuevaZonaForm.parroquia}
+                    onChange={(e) => setNuevaZonaForm(p => ({ ...p, parroquia: e.target.value }))}
+                    required
+                    className="bg-white/5 border-white/10 rounded-xl h-10 text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label htmlFor="zona_sector" className="text-xs text-zinc-300">Sector</Label>
+                  <Input
+                    id="zona_sector"
+                    type="text"
+                    placeholder="Campo Alegre"
+                    value={nuevaZonaForm.sector}
+                    onChange={(e) => setNuevaZonaForm(p => ({ ...p, sector: e.target.value }))}
+                    required
+                    className="bg-white/5 border-white/10 rounded-xl h-10 text-xs"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <Label htmlFor="zona_urb" className="text-xs text-zinc-300">Urb / Res</Label>
+                  <Input
+                    id="zona_urb"
+                    type="text"
+                    placeholder="Res Palma Real"
+                    value={nuevaZonaForm.urbanizacion_residencia}
+                    onChange={(e) => setNuevaZonaForm(p => ({ ...p, urbanizacion_residencia: e.target.value }))}
+                    required
+                    className="bg-white/5 border-white/10 rounded-xl h-10 text-xs"
+                  />
+                </div>
+              </div>
+
               <div className="space-y-1">
-                <Label htmlFor="direccion_zona" className="text-xs text-zinc-300">Dirección Física</Label>
+                <Label htmlFor="zona_calle" className="text-xs text-zinc-300">Calle / Av / Casa / Apto</Label>
                 <Input
-                  id="direccion_zona"
+                  id="zona_calle"
                   type="text"
-                  placeholder="Av. Principal El Limón, entre calles 2 y 3"
-                  value={nuevaZonaForm.direccion}
-                  onChange={(e) => setNuevaZonaForm(p => ({ ...p, direccion: e.target.value }))}
+                  placeholder="Av. Principal, Edificio A"
+                  value={nuevaZonaForm.calle_casa}
+                  onChange={(e) => setNuevaZonaForm(p => ({ ...p, calle_casa: e.target.value }))}
                   required
                   className="bg-white/5 border-white/10 rounded-xl h-10 text-xs"
                 />

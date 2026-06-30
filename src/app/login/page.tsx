@@ -36,12 +36,9 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-dvh flex items-center justify-center p-4">
-      {/* Fondo con gradiente radial */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-teal-500/10 blur-3xl" />
-        <div className="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-teal-400/5 blur-3xl" />
-      </div>
+    <div className="min-h-dvh flex items-center justify-center p-4 relative bg-cover bg-center" style={{ backgroundImage: "url('/vzla.jpg')" }}>
+      {/* Capa de overlay oscuro/teal sobre la imagen */}
+      <div className="absolute inset-0 bg-zinc-950/85 backdrop-blur-xs pointer-events-none" />
 
       <div className="relative w-full max-w-sm">
         {/* Logo / Header */}

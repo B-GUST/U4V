@@ -19,7 +19,12 @@ export default function RegistroPage() {
     sms: '',
     instagram: '',
     tipo_entidad: 'ong',
-    direccion_fisica: '',
+    estado: '',
+    ciudad: '',
+    municipio: '',
+    parroquia: '',
+    calle_casa: '',
+    punto_referencia: '',
     capacidad_hospedaje: 0,
     capacidad_salud_camas: 0,
     capacidad_raciones_diarias: 0,
@@ -48,9 +53,12 @@ export default function RegistroPage() {
     if (!phoneRegex.test(formData.sms)) {
       return "El número de SMS no es válido. Debe tener formato internacional (ej: +584121234567) sin letras, espacios ni guiones."
     }
-    if (formData.direccion_fisica.trim().length < 5) {
-      return "La dirección física debe tener al menos 5 caracteres descriptivos."
-    }
+    if (formData.estado.trim().length < 2) return "El Estado es requerido."
+    if (formData.ciudad.trim().length < 2) return "La Ciudad es requerida."
+    if (formData.municipio.trim().length < 2) return "El Municipio es requerido."
+    if (formData.parroquia.trim().length < 2) return "La Parroquia es requerida."
+    if (formData.calle_casa.trim().length < 2) return "La Calle, Avenida o Casa/Apto es requerida."
+    if (formData.punto_referencia.trim().length < 2) return "El Punto de referencia es requerido."
     return null
   }
 
@@ -100,12 +108,19 @@ export default function RegistroPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { id, value } = e.target
+    let finalValue = value
+
+    if (id === 'whatsapp' || id === 'sms') {
+      // Permitir solo números y el símbolo +
+      finalValue = value.replace(/[^\d+]/g, '')
+    }
+
     setFormData((prev) => {
-      const updated = { ...prev, [id]: value }
+      const updated = { ...prev, [id]: finalValue }
       
       // Ajustes automáticos de raciones si es 0
       if (id === 'capacidad_raciones_diarias') {
-        const val = Number(value)
+        const val = Number(finalValue)
         if (val === 0) {
           updated.tipo_racion = 'ninguno'
         } else if (updated.tipo_racion === 'ninguno') {
@@ -195,18 +210,98 @@ export default function RegistroPage() {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="estado" className="text-xs font-medium text-zinc-300">Estado</Label>
+                      <select
+                        id="estado"
+                        value={formData.estado}
+                        onChange={handleChange}
+                        className="bg-zinc-900 border border-white/10 text-white rounded-xl h-10 px-3 text-xs w-full focus:border-teal-500/60 focus:ring-teal-500/20"
+                        required
+                      >
+                        <option value="">Selecciona...</option>
+                        <option value="Distrito Capital">Distrito Capital</option>
+                        <option value="Miranda">Miranda</option>
+                        <option value="Aragua">Aragua</option>
+                        <option value="Carabobo">Carabobo</option>
+                        <option value="Zulia">Zulia</option>
+                        <option value="Lara">Lara</option>
+                        <option value="Mérida">Mérida</option>
+                        <option value="Táchira">Táchira</option>
+                        <option value="Bolívar">Bolívar</option>
+                        <option value="Anzoátegui">Anzoátegui</option>
+                        <option value="Otro">Otro Estado</option>
+                      </select>
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label htmlFor="ciudad" className="text-xs font-medium text-zinc-300">Ciudad</Label>
+                      <Input
+                        id="ciudad"
+                        type="text"
+                        placeholder="Ej: Caracas"
+                        value={formData.ciudad}
+                        onChange={handleChange}
+                        required
+                        className="bg-white/5 border-white/10 text-xs focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label htmlFor="municipio" className="text-xs font-medium text-zinc-300">Municipio</Label>
+                      <Input
+                        id="municipio"
+                        type="text"
+                        placeholder="Ej: Chacao"
+                        value={formData.municipio}
+                        onChange={handleChange}
+                        required
+                        className="bg-white/5 border-white/10 text-xs focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="parroquia" className="text-xs font-medium text-zinc-300">Parroquia</Label>
+                      <Input
+                        id="parroquia"
+                        type="text"
+                        placeholder="Ej: El Rosal"
+                        value={formData.parroquia}
+                        onChange={handleChange}
+                        required
+                        className="bg-white/5 border-white/10 text-xs focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <Label htmlFor="calle_casa" className="text-xs font-medium text-zinc-300">Calle / Av. / Casa / Apto</Label>
+                      <Input
+                        id="calle_casa"
+                        type="text"
+                        placeholder="Ej: Av. Principal, Res. Sol Apt 2B"
+                        value={formData.calle_casa}
+                        onChange={handleChange}
+                        required
+                        className="bg-white/5 border-white/10 text-xs focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10"
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-1">
-                    <Label htmlFor="direccion_fisica" className="text-xs font-medium text-zinc-300">
-                      Ubicación / Dirección Física Completa
+                    <Label htmlFor="punto_referencia" className="text-xs font-medium text-zinc-300">
+                      Punto de Referencia
                     </Label>
                     <Input
-                      id="direccion_fisica"
+                      id="punto_referencia"
                       type="text"
-                      placeholder="Calle 4 con Av. Francisco de Miranda, Chacao, Caracas"
-                      value={formData.direccion_fisica}
+                      placeholder="Ej: Frente al CC El Recreo"
+                      value={formData.punto_referencia}
                       onChange={handleChange}
                       required
-                      className="bg-white/5 border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10 text-sm"
+                      className="bg-white/5 border-white/10 text-xs focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10"
                     />
                   </div>
                 </div>

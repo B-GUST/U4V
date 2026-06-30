@@ -23,7 +23,12 @@ const RegistroSchema = z.object({
     message: "El teléfono SMS debe tener formato internacional numérico (ej: +584121234567) sin espacios ni letras."
   }),
   tipo_entidad: z.enum(['centro_acopio', 'ong', 'refugio', 'hospital', 'otro']),
-  direccion_fisica: z.string().min(5, "La dirección física debe ser más descriptiva").trim(),
+  estado: z.string().min(2, "El estado es requerido").trim(),
+  ciudad: z.string().min(2, "La ciudad es requerida").trim(),
+  municipio: z.string().min(2, "El municipio es requerido").trim(),
+  parroquia: z.string().min(2, "La parroquia es requerida").trim(),
+  calle_casa: z.string().min(2, "La calle/av/casa/apto es requerida").trim(),
+  punto_referencia: z.string().min(2, "El punto de referencia es requerido").trim(),
   capacidad_hospedaje: z.number().int().min(0).default(0),
   capacidad_salud_camas: z.number().int().min(0).default(0),
   capacidad_raciones_diarias: z.number().int().min(0).default(0),
@@ -59,12 +64,19 @@ export async function POST(request: NextRequest) {
       sms,
       instagram,
       tipo_entidad,
-      direccion_fisica,
+      estado,
+      ciudad,
+      municipio,
+      parroquia,
+      calle_casa,
+      punto_referencia,
       capacidad_hospedaje,
       capacidad_salud_camas,
       capacidad_raciones_diarias,
       tipo_racion
     } = result.data
+
+    const direccion_fisica = `${calle_casa}, Parroquia ${parroquia}, Municipio ${municipio}, ${ciudad}, Estado ${estado}`
 
     const supabase = createServiceClient()
 
@@ -111,6 +123,12 @@ export async function POST(request: NextRequest) {
         terminos_aceptados: false,
         tipo_entidad,
         direccion_fisica,
+        estado,
+        ciudad,
+        municipio,
+        parroquia,
+        calle_casa,
+        punto_referencia,
         capacidad_hospedaje,
         capacidad_salud_camas,
         capacidad_raciones_diarias,

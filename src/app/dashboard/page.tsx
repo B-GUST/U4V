@@ -67,6 +67,12 @@ export default async function DashboardPage() {
     .select('*, hospital_perfil:hospital_id(nombre_organizacion, nombre_contacto, whatsapp), refugio_perfil:refugio_id(nombre_organizacion)')
     .order('creado_en', { ascending: false })
 
+  // Obtener boletín de avisos generales
+  const { data: boletin } = await supabase
+    .from('boletin_avisos')
+    .select('*, perfil_autor:autor_id(nombre_organizacion, nombre_contacto)')
+    .order('creado_en', { ascending: false })
+
   return (
     <DashboardClient
       perfil={perfil}
@@ -77,6 +83,7 @@ export default async function DashboardPage() {
       despachosIntermediosIniciales={despachosIntermedios ?? []}
       incidenciasIniciales={incidencias ?? []}
       trasladosIniciales={traslados ?? []}
+      boletinInicial={boletin ?? []}
     />
   )
 }

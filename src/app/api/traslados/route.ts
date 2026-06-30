@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { registrarAuditoria } from '@/lib/audit'
 
 const TrasladoSchema = z.object({
   cantidad_personas: z.number().int().min(1, "Debe ser al menos 1 persona"),
@@ -9,8 +10,10 @@ const TrasladoSchema = z.object({
 
 const UpdateTrasladoSchema = z.object({
   id: z.string().uuid(),
-  estado: z.enum(['pendiente', 'asignado', 'completado']),
-  refugio_id: z.string().uuid().optional().nullable()
+  estado: z.enum(['pendiente', 'asignado', 'completado']).optional(),
+  refugio_id: z.string().uuid().optional().nullable(),
+  cantidad_personas: z.number().int().min(1, "Debe ser al menos 1 persona").optional(),
+  observaciones: z.string().optional().nullable()
 })
 
 export async function GET() {
@@ -69,6 +72,7 @@ export async function POST(request: NextRequest) {
       })
 
     if (error) throw error
+    await registrarAuditoria('crear_traslado', { cantidad_personas: result.data.cantidad_personas, observaciones: result.data.observaciones })
     return NextResponse.json({ success: true }, { status: 201 })
   } catch (err: any) {
     console.error('Error creating traslado:', err)
@@ -91,7 +95,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: result.error.issues.map(e => e.message).join('. ') }, { status: 400 })
     }
 
-    const { id, estado, refugio_id } = result.data
+    const { id, estado, refugio_id, cantidad_personas, observaciones } = result.data
 
     // Obtener los datos del traslado antes de actualizar
     const { data: traslado, error: getError } = await supabase
@@ -104,9 +108,21 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'No se encontró el traslado especificado.' }, { status: 404 })
     }
 
-    // 1. Si el estado cambia a asignado, descontamos las vacantes en el refugio correspondiente
+    // 1. Si se intenta modificar cantidad_personas o observaciones, validar que sea el hospital origen o admin
+    if (cantidad_personas !== undefined || observaciones !== undefined) {
+      const { data: perfil } = await supabase
+        .from('perfiles')
+        .select('rol')
+        .eq('id', user.id)
+        .single()
+
+      if (traslado.hospital_id !== user.id && perfil?.rol !== 'admin') {
+        return NextResponse.json({ error: 'No autorizado para modificar los datos de este traslado.' }, { status: 403 })
+      }
+    }
+
+    // 2. Si el estado cambia a asignado, descontamos las vacantes en el refugio correspondiente
     if (estado === 'asignado' && refugio_id) {
-      // Obtener el perfil del refugio para comprobar vacantes
       const { data: refugio } = await supabase
         .from('perfiles')
         .select('vacantes_disponibles, tipo_entidad')
@@ -114,9 +130,9 @@ export async function PATCH(request: NextRequest) {
         .single()
 
       if (refugio) {
-        const nuevasVacantes = Math.max(0, refugio.vacantes_disponibles - traslado.cantidad_personas)
+        const cant = cantidad_personas !== undefined ? cantidad_personas : traslado.cantidad_personas
+        const nuevasVacantes = Math.max(0, refugio.vacantes_disponibles - cant)
         
-        // Actualizar vacantes del refugio
         await supabase
           .from('perfiles')
           .update({ vacantes_disponibles: nuevasVacantes })
@@ -124,22 +140,65 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
-    // 2. Si el estado anterior era asignado y cambia a completado o pendiente, o se cancela, se puede liberar o re-ajustar.
-    // (Por simplicidad y robustez, al completarse el traslado se asume que las plazas ya se ocuparon de forma permanente)
+    const updates: any = {
+      actualizado_en: new Date().toISOString()
+    }
+    if (estado !== undefined) updates.estado = estado
+    if (refugio_id !== undefined) updates.refugio_id = refugio_id
+    if (cantidad_personas !== undefined) updates.cantidad_personas = cantidad_personas
+    if (observaciones !== undefined) updates.observaciones = observaciones
 
     const { error } = await supabase
       .from('traslados_pacientes')
-      .update({
-        estado,
-        refugio_id: refugio_id || null,
-        actualizado_en: new Date().toISOString()
-      })
+      .update(updates)
       .eq('id', id)
 
     if (error) throw error
+    await registrarAuditoria('editar_traslado', { id, estado, refugio_id, cantidad_personas, observaciones })
     return NextResponse.json({ success: true })
   } catch (err: any) {
     console.error('Error updating traslado:', err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    const { data: perfil } = await supabase
+      .from('perfiles')
+      .select('rol')
+      .eq('id', user.id)
+      .single()
+
+    if (perfil?.rol !== 'admin') {
+      return NextResponse.json({ error: 'Solo los administradores pueden eliminar registros.' }, { status: 403 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'Falta el ID del registro a eliminar.' }, { status: 400 })
+    }
+
+    const { error } = await supabase
+      .from('traslados_pacientes')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    await registrarAuditoria('eliminar_traslado', { id })
+    return NextResponse.json({ success: true })
+  } catch (err: any) {
+    console.error('Error deleting traslado:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

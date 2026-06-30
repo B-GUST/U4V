@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { registrarAuditoria } from '@/lib/audit'
 
 const ZonaSchema = z.object({
   nombre_nodo: z.string().min(3, "El nombre de la zona debe tener al menos 3 caracteres").max(100).trim(),
   descripcion: z.string().optional().nullable(),
   direccion: z.string().min(5, "La dirección debe ser descriptiva").trim(),
   punto_referencia: z.string().min(3, "El punto de referencia debe ser más claro").trim()
+})
+
+const EditZonaSchema = z.object({
+  id: z.string().uuid(),
+  nombre_nodo: z.string().min(3, "El nombre de la zona debe tener al menos 3 caracteres").max(100).trim().optional(),
+  descripcion: z.string().optional().nullable(),
+  direccion: z.string().min(5, "La dirección debe ser descriptiva").trim().optional(),
+  punto_referencia: z.string().min(3, "El punto de referencia debe ser más claro").trim().optional()
 })
 
 export async function GET() {
@@ -71,9 +80,104 @@ export async function POST(request: NextRequest) {
       })
 
     if (error) throw error
+    await registrarAuditoria('crear_zona', { nombre_nodo, direccion, punto_referencia })
     return NextResponse.json({ success: true }, { status: 201 })
   } catch (err: any) {
     console.error('Error creating zona:', err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const result = EditZonaSchema.safeParse(body)
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.issues.map(e => e.message).join('. ') }, { status: 400 })
+    }
+
+    const { id, ...camposAActualizar } = result.data
+
+    // Verificar propiedad o rol admin
+    const { data: perfil } = await supabase
+      .from('perfiles')
+      .select('rol')
+      .eq('id', user.id)
+      .single()
+
+    if (perfil?.rol !== 'admin') {
+      const { data: zona } = await supabase
+        .from('nodos_geograficos')
+        .select('creador_id')
+        .eq('id', id)
+        .single()
+
+      if (zona?.creador_id !== user.id) {
+        return NextResponse.json({ error: 'No autorizado para modificar esta zona.' }, { status: 403 })
+      }
+    }
+
+    const { error } = await supabase
+      .from('nodos_geograficos')
+      .update({
+        ...camposAActualizar,
+        ultima_actualizacion: new Date().toISOString()
+      })
+      .eq('id', id)
+
+    if (error) throw error
+    await registrarAuditoria('editar_zona', { id, ...camposAActualizar })
+    return NextResponse.json({ success: true })
+  } catch (err: any) {
+    console.error('Error updating zona:', err)
+    return NextResponse.json({ error: err.message }, { status: 500 })
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
+    const { data: perfil } = await supabase
+      .from('perfiles')
+      .select('rol')
+      .eq('id', user.id)
+      .single()
+
+    if (perfil?.rol !== 'admin') {
+      return NextResponse.json({ error: 'Solo los administradores pueden eliminar registros.' }, { status: 403 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const id = searchParams.get('id')
+
+    if (!id) {
+      return NextResponse.json({ error: 'Falta el ID del registro a eliminar.' }, { status: 400 })
+    }
+
+    const { error } = await supabase
+      .from('nodos_geograficos')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+
+    await registrarAuditoria('eliminar_zona', { id })
+    return NextResponse.json({ success: true })
+  } catch (err: any) {
+    console.error('Error deleting zona:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
   }
 }

@@ -25,6 +25,12 @@ export interface Perfil {
   terminos_aceptados: boolean
   tipo_entidad: TipoEntidad
   direccion_fisica: string | null
+  estado?: string | null
+  ciudad?: string | null
+  municipio?: string | null
+  parroquia?: string | null
+  calle_casa?: string | null
+  punto_referencia?: string | null
   capacidad_hospedaje: number
   capacidad_salud_camas: number
   capacidad_raciones_diarias: number
@@ -45,6 +51,12 @@ export interface NodoGeografico {
   activo: boolean
   direccion: string | null
   punto_referencia: string | null
+  estado?: string | null
+  ciudad?: string | null
+  municipio?: string | null
+  parroquia?: string | null
+  calle_casa?: string | null
+  ultimo_reporte_timestamp?: string
   creador_id: string | null
   ultima_actualizacion: string
   creado_en: string
@@ -152,6 +164,16 @@ export interface TrasladoPaciente {
   refugio_perfil?: Perfil
 }
 
+export interface BoletinAviso {
+  id: string
+  autor_id: string
+  titulo: string
+  contenido: string
+  categoria: string
+  creado_en: string
+  perfil_autor?: Perfil
+}
+
 // Tipo compuesto para el Libro Mayor (dashboard)
 export interface NodoConDespachos extends NodoGeografico {
   despachos_hoy: {
@@ -244,6 +266,14 @@ export type Database = {
           actualizado_en?: string
         }
         Update: Partial<Omit<TrasladoPaciente, 'id' | 'creado_en'>>
+      }
+      boletin_avisos: {
+        Row: BoletinAviso
+        Insert: Omit<BoletinAviso, 'id' | 'creado_en'> & {
+          id?: string
+          creado_en?: string
+        }
+        Update: Partial<Omit<BoletinAviso, 'id' | 'creado_en'>>
       }
     }
     Views: Record<string, never>

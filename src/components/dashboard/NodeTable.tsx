@@ -8,6 +8,7 @@ interface NodeTableProps {
   despachos: Despacho[]
   perfilActual: Perfil
   onSlotClick: (nodo: NodoGeografico, franja: BloquesTiempo) => void
+  onEditZona?: (nodo: NodoGeografico) => void
 }
 
 const FRANJAS: BloquesTiempo[] = ['mañana', 'tarde', 'noche']
@@ -40,7 +41,7 @@ function DeficitBar({ actual, total }: { actual: number; total: number }) {
   )
 }
 
-export function NodeTable({ nodos, despachos, perfilActual, onSlotClick }: NodeTableProps) {
+export function NodeTable({ nodos, despachos, perfilActual, onSlotClick, onEditZona }: NodeTableProps) {
   if (nodos.length === 0) {
     return (
       <div className="glass rounded-2xl p-12 text-center">
@@ -50,9 +51,9 @@ export function NodeTable({ nodos, despachos, perfilActual, onSlotClick }: NodeT
   }
 
   return (
-    <div className="glass rounded-2xl overflow-hidden border border-white/8">
+    <div className="glass rounded-2xl overflow-x-auto border border-white/8">
       {/* Header */}
-      <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-0 border-b border-white/8 bg-white/3">
+      <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-0 border-b border-white/8 bg-white/3 min-w-[700px] md:min-w-0">
         <div className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Zona / Nodo</div>
         <div className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Déficit Hoy</div>
         {FRANJAS.map(f => (
@@ -70,14 +71,27 @@ export function NodeTable({ nodos, despachos, perfilActual, onSlotClick }: NodeT
           return (
             <div
               key={nodo.id}
-              className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-0 hover:bg-white/3 transition-colors duration-150 group"
+              className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-0 hover:bg-white/3 transition-colors duration-150 group min-w-[700px] md:min-w-0"
             >
               {/* Nombre del nodo */}
               <div className="px-4 py-3">
                 <div className="flex flex-col gap-1">
-                  <span className="text-sm font-semibold text-foreground group-hover:text-teal-400/90 transition-colors">
-                    {nodo.nombre_nodo}
-                  </span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-foreground group-hover:text-teal-400/90 transition-colors">
+                      {nodo.nombre_nodo}
+                    </span>
+                    {onEditZona && (nodo.creador_id === perfilActual.id || perfilActual.rol === 'admin') && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onEditZona(nodo)
+                        }}
+                        className="text-[10px] text-teal-400 hover:text-teal-300 font-medium ml-2 px-1.5 py-0.5 rounded bg-white/5 border border-white/5"
+                      >
+                        Editar ✏️
+                      </button>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     <UrgenciaBadge nivel={nodo.semaforo_medico} />
                     <span className="text-xs text-muted-foreground">

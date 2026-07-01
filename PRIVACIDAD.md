@@ -2,7 +2,7 @@
 Última actualización: 29 de junio de 2026
 
 ## 1. Responsable del Tratamiento
-La iniciativa de voluntariado de datos **Unidos por Venezuela (U4V)** es responsable del tratamiento y resguardo de la información recopilada en esta plataforma. Contacto de soporte y consultas: `admin@u4v.org`.
+La iniciativa de voluntariado de datos **Unidos por Venezuela (U4V)** es responsable del tratamiento y resguardo de la información recopilada en esta plataforma. Contacto de soporte y consultas: `augustbenitogroup@gmail.com`.
 
 ## 2. Datos Recopilados y Propósito
 Bajo el principio de **minimización de datos**, recopilamos únicamente la información técnica y de contacto estrictamente indispensable para orquestar la asistencia civil:

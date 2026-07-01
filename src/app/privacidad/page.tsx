@@ -45,7 +45,7 @@ export default function PrivacidadPage() {
               <span className="text-teal-400">1.</span> Responsable del Tratamiento
             </h3>
             <p className="text-sm">
-              La iniciativa de voluntariado de datos <strong className="text-white">Unidos por Venezuela (U4V)</strong> es responsable del tratamiento y resguardo de la información recopilada en esta plataforma. Contacto de soporte y consultas: <code className="text-teal-300 bg-white/5 px-1.5 py-0.5 rounded">admin@u4v.org</code>.
+              La iniciativa de voluntariado de datos <strong className="text-white">Unidos por Venezuela (U4V)</strong> es responsable del tratamiento y resguardo de la información recopilada en esta plataforma. Contacto de soporte y consultas: <code className="text-teal-300 bg-white/5 px-1.5 py-0.5 rounded">augustbenitogroup@gmail.com</code>.
             </p>
           </section>
 

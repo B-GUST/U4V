@@ -31,7 +31,7 @@ export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname
 
   // Rutas públicas — no requieren autenticación
-  const publicRoutes = ['/login', '/reporte', '/registro', '/bgust', '/auth/callback']
+  const publicRoutes = ['/login', '/reporte', '/registro', '/bgust', '/auth/callback', '/privacidad', '/terminos']
   const isPublicRoute = publicRoutes.some((r) => pathname.startsWith(r))
 
   // Si no está autenticado y quiere acceder al dashboard → login

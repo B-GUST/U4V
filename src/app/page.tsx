@@ -185,8 +185,27 @@ export default async function Home() {
       </main>
 
       {/* FOOTER */}
-      <footer className="glass border-t border-white/8 px-6 py-6 text-center text-xs text-zinc-500 z-10">
-        <p>Unidos por Venezuela · Plataforma Humanitaria Abierta · 2026</p>
+      <footer className="glass border-t border-white/8 px-6 py-8 text-center text-zinc-500 z-10 flex flex-col items-center gap-4">
+        <div className="flex gap-4 text-xs font-medium text-zinc-400">
+          <Link href="/privacidad" className="hover:text-teal-400 transition-colors">
+            Política de Privacidad
+          </Link>
+          <span className="text-zinc-700">•</span>
+          <Link href="/terminos" className="hover:text-teal-400 transition-colors">
+            Términos de Servicio
+          </Link>
+        </div>
+        <div className="mt-2 text-center">
+          <p className="text-[10px] text-zinc-400 leading-normal">
+            © 2026 BGUST
+          </p>
+          <p className="text-[10px] text-zinc-500 leading-normal mt-0.5 italic">
+            "La vida es más alegre cuando vives para servir"
+          </p>
+          <p className="text-[9px] text-teal-500/70 leading-normal mt-0.5 font-medium">
+            Hecho con amor para mi Venezuela 🇻🇪
+          </p>
+        </div>
       </footer>
     </div>
   )

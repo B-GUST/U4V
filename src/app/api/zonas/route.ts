@@ -56,6 +56,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
+    // Validar que el creador sea de primera línea o admin (coordinadores de zona)
+    const { data: perfil } = await supabase
+      .from('perfiles')
+      .select('rol')
+      .eq('id', user.id)
+      .single()
+
+    if (!perfil) {
+      return NextResponse.json({ error: 'Perfil no encontrado.' }, { status: 404 })
+    }
+
+    if (perfil.rol !== 'admin' && perfil.rol !== 'primera_linea') {
+      return NextResponse.json({ error: 'Solo coordinadores de primera línea pueden registrar nuevas zonas.' }, { status: 403 })
+    }
+
     const body = await request.json()
     const result = ZonaSchema.safeParse(body)
     if (!result.success) {
@@ -76,7 +91,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Esa zona o ubicación ya está registrada en la red.' }, { status: 409 })
     }
 
-    const { error } = await supabase
+    const { data: nuevoRegistro, error } = await supabase
       .from('nodos_geograficos')
       .insert({
         nombre_nodo,
@@ -98,10 +113,12 @@ export async function POST(request: NextRequest) {
         creador_id: user.id,
         ultima_actualizacion: new Date().toISOString()
       })
+      .select('*')
+      .single()
 
     if (error) throw error
     await registrarAuditoria('crear_zona', { nombre_nodo, direccion, punto_referencia })
-    return NextResponse.json({ success: true }, { status: 201 })
+    return NextResponse.json(nuevoRegistro, { status: 201 })
   } catch (err: any) {
     console.error('Error creating zona:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
@@ -125,25 +142,8 @@ export async function PATCH(request: NextRequest) {
 
     const { id, ...camposAActualizar } = result.data
 
-    // Verificar propiedad o rol admin
-    const { data: perfil } = await supabase
-      .from('perfiles')
-      .select('rol')
-      .eq('id', user.id)
-      .single()
-
-    if (perfil?.rol !== 'admin') {
-      const { data: zona } = await supabase
-        .from('nodos_geograficos')
-        .select('creador_id')
-        .eq('id', id)
-        .single()
-
-      if (zona?.creador_id !== user.id) {
-        return NextResponse.json({ error: 'No autorizado para modificar esta zona.' }, { status: 403 })
-      }
-    }
-
+    // Cualquier usuario autenticado puede sugerir ediciones (Sugerir edición)
+    // El control de spam básico se maneja mediante auditoría
     const { error } = await supabase
       .from('nodos_geograficos')
       .update({
@@ -153,7 +153,7 @@ export async function PATCH(request: NextRequest) {
       .eq('id', id)
 
     if (error) throw error
-    await registrarAuditoria('editar_zona', { id, ...camposAActualizar })
+    await registrarAuditoria('editar_zona', { id, usuario: user.id, ...camposAActualizar })
     return NextResponse.json({ success: true })
   } catch (err: any) {
     console.error('Error updating zona:', err)

@@ -38,6 +38,7 @@ export interface Perfil {
   capacidad_raciones_diarias: number
   tipo_racion: TipoRacion
   vacantes_disponibles: number
+  descripcion_tareas: string | null
   creado_en: string
   actualizado_en: string
 }
@@ -62,6 +63,7 @@ export interface NodoGeografico {
   calle_casa?: string | null
   ultimo_reporte_timestamp?: string
   creador_id: string | null
+  perfil_id: string | null
   ultima_actualizacion: string
   creado_en: string
 }

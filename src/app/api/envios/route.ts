@@ -61,6 +61,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
+    // Validar que el creador sea un centro de distribución o admin
+    const { data: perfil } = await supabase
+      .from('perfiles')
+      .select('tipo_entidad, rol')
+      .eq('id', user.id)
+      .single()
+
+    if (!perfil) {
+      return NextResponse.json({ error: 'Perfil no encontrado.' }, { status: 404 })
+    }
+
+    if (perfil.rol !== 'admin' && !['centro_acopio', 'ong'].includes(perfil.tipo_entidad)) {
+      return NextResponse.json({ error: 'Solo centros de acopio y ONGs pueden emitir despachos.' }, { status: 403 })
+    }
+
     const body = await request.json()
     const result = EnvioSchema.safeParse(body)
     if (!result.success) {
@@ -73,7 +88,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Debes especificar un destino (un centro registrado o una zona geográfica)' }, { status: 400 })
     }
 
-    const { error } = await supabase
+    const { data: nuevoRegistro, error } = await supabase
       .from('despachos_intermedios')
       .insert({
         origen_id: user.id,
@@ -89,10 +104,12 @@ export async function POST(request: NextRequest) {
         hora_salida: data.hora_salida || null,
         fecha_salida: new Date().toISOString()
       })
+      .select('*, perfil_origen:origen_id(nombre_organizacion, nombre_contacto, whatsapp), perfil_destino:destino_perfil_id(nombre_organizacion, nombre_contacto, whatsapp, direccion_fisica), nodo_destino:destino_nodo_id(nombre_nodo)')
+      .single()
 
     if (error) throw error
     await registrarAuditoria('crear_despacho', result.data)
-    return NextResponse.json({ success: true }, { status: 201 })
+    return NextResponse.json(nuevoRegistro, { status: 201 })
   } catch (err: any) {
     console.error('Error creating envio:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

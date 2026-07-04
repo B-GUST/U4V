@@ -45,15 +45,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
     }
 
-    // Validar que el creador sea de tipo hospital o admin
+    // Validar que el creador sea hospital, centro de acopio o admin
     const { data: perfil } = await supabase
       .from('perfiles')
-      .select('tipo_entidad')
+      .select('tipo_entidad, rol')
       .eq('id', user.id)
       .single()
 
-    if (perfil?.tipo_entidad !== 'hospital' && perfil?.tipo_entidad !== 'otro') {
-      return NextResponse.json({ error: 'Solo entidades médicas u hospitales pueden emitir traslados.' }, { status: 403 })
+    if (!perfil) {
+      return NextResponse.json({ error: 'Perfil no encontrado.' }, { status: 404 })
+    }
+
+    if (perfil.rol !== 'admin' && !['hospital', 'centro_acopio'].includes(perfil.tipo_entidad)) {
+      return NextResponse.json({ error: 'Solo hospitales y centros de acopio pueden emitir traslados.' }, { status: 403 })
     }
 
     const body = await request.json()
@@ -62,7 +66,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.error.issues.map(e => e.message).join('. ') }, { status: 400 })
     }
 
-    const { error } = await supabase
+    const { data: nuevoRegistro, error } = await supabase
       .from('traslados_pacientes')
       .insert({
         hospital_id: user.id,
@@ -70,10 +74,12 @@ export async function POST(request: NextRequest) {
         observaciones: result.data.observaciones || null,
         estado: 'pendiente'
       })
+      .select('*, hospital_perfil:hospital_id(nombre_organizacion, nombre_contacto, whatsapp), refugio_perfil:refugio_id(nombre_organizacion, nombre_contacto, whatsapp)')
+      .single()
 
     if (error) throw error
     await registrarAuditoria('crear_traslado', { cantidad_personas: result.data.cantidad_personas, observaciones: result.data.observaciones })
-    return NextResponse.json({ success: true }, { status: 201 })
+    return NextResponse.json(nuevoRegistro, { status: 201 })
   } catch (err: any) {
     console.error('Error creating traslado:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

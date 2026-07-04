@@ -36,6 +36,7 @@ const RegistroSchema = z.object({
   capacidad_raciones_diarias: z.number().int().min(0).default(0),
   tipo_racion: z.enum(['comida_bebida', 'solo_comida', 'ninguno']).default('ninguno'),
   instagram: z.string().optional().nullable(),
+  descripcion_tareas: z.string().optional().nullable(),
 })
 
 function createServiceClient() {
@@ -77,7 +78,8 @@ export async function POST(request: NextRequest) {
       capacidad_hospedaje,
       capacidad_salud_camas,
       capacidad_raciones_diarias,
-      tipo_racion
+      tipo_racion,
+      descripcion_tareas
     } = result.data
 
     const direccion_fisica = `${calle_casa}, ${urbanizacion_residencia}, Sector ${sector}, Parroquia ${parroquia}, Municipio ${municipio}, ${ciudad}, Estado ${estado}`
@@ -138,7 +140,8 @@ export async function POST(request: NextRequest) {
         capacidad_hospedaje,
         capacidad_salud_camas,
         capacidad_raciones_diarias,
-        tipo_racion
+        tipo_racion,
+        descripcion_tareas: descripcion_tareas || null
       })
 
     if (profileError) {
@@ -150,6 +153,48 @@ export async function POST(request: NextRequest) {
         { error: 'Error al registrar los datos de la organización.' },
         { status: 500 }
       )
+    }
+
+    // 5. Vincular o crear zona geográfica para hospitales, refugios y centros de acopio
+    if (['hospital', 'refugio', 'centro_acopio'].includes(tipo_entidad)) {
+      // Buscar zona existente con nombre similar
+      const { data: zonaExistente } = await supabase
+        .from('nodos_geograficos')
+        .select('id')
+        .ilike('nombre_nodo', `%${nombre_organizacion.split(' ').slice(0, 2).join(' ')}%`)
+        .maybeSingle()
+
+      if (zonaExistente) {
+        // Vincular perfil a zona existente
+        await supabase
+          .from('nodos_geograficos')
+          .update({ perfil_id: authData.user.id })
+          .eq('id', zonaExistente.id)
+      } else {
+        // Crear nueva zona geográfica vinculada al perfil
+        await supabase
+          .from('nodos_geograficos')
+          .insert({
+            nombre_nodo: nombre_organizacion,
+            descripcion: descripcion_tareas || null,
+            direccion: direccion_fisica,
+            estado,
+            ciudad,
+            municipio,
+            parroquia,
+            sector,
+            urbanizacion_residencia,
+            calle_casa,
+            punto_referencia,
+            poblacion_estimada: 0,
+            deficit_diario_raciones: 0,
+            deficit_diario_agua_litros: 0,
+            semaforo_medico: 'verde',
+            activo: true,
+            perfil_id: authData.user.id,
+            creador_id: authData.user.id
+          })
+      }
     }
 
     return NextResponse.json({ success: true }, { status: 201 })

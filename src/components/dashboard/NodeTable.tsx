@@ -9,6 +9,8 @@ interface NodeTableProps {
   perfilActual: Perfil
   onSlotClick: (nodo: NodoGeografico, franja: BloquesTiempo) => void
   onEditZona?: (nodo: NodoGeografico) => void
+  zonasPrioritarias: Set<string>
+  onTogglePrioridad: (nodoId: string) => void
 }
 
 const FRANJAS: BloquesTiempo[] = ['mañana', 'tarde', 'noche']
@@ -41,7 +43,11 @@ function DeficitBar({ actual, total }: { actual: number; total: number }) {
   )
 }
 
-export function NodeTable({ nodos, despachos, perfilActual, onSlotClick, onEditZona }: NodeTableProps) {
+function estaIncompleta(nodo: NodoGeografico): boolean {
+  return !nodo.estado || !nodo.ciudad
+}
+
+export function NodeTable({ nodos, despachos, perfilActual, onSlotClick, onEditZona, zonasPrioritarias, onTogglePrioridad }: NodeTableProps) {
   if (nodos.length === 0) {
     return (
       <div className="glass rounded-2xl p-12 text-center">
@@ -54,7 +60,7 @@ export function NodeTable({ nodos, despachos, perfilActual, onSlotClick, onEditZ
     <div className="glass rounded-2xl overflow-x-auto border border-white/8">
       {/* Header */}
       <div className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-0 border-b border-white/8 bg-white/3 min-w-[700px] md:min-w-0">
-        <div className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Zona / Nodo</div>
+        <div className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Ubicación</div>
         <div className="px-4 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Déficit Hoy</div>
         {FRANJAS.map(f => (
           <div key={f} className="px-2 py-3 text-xs font-semibold text-muted-foreground uppercase tracking-wider text-center">
@@ -73,61 +79,91 @@ export function NodeTable({ nodos, despachos, perfilActual, onSlotClick, onEditZ
               key={nodo.id}
               className="grid grid-cols-[2fr_1.5fr_1fr_1fr_1fr] gap-0 hover:bg-white/3 transition-colors duration-150 group min-w-[700px] md:min-w-0"
             >
-              {/* Nombre del nodo */}
+              {/* Nombre de la ubicación */}
               <div className="px-4 py-3">
                 <div className="flex flex-col gap-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-semibold text-foreground group-hover:text-teal-400/90 transition-colors">
                       {nodo.nombre_nodo}
                     </span>
-                    {onEditZona && (nodo.creador_id === perfilActual.id || perfilActual.rol === 'admin') && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onEditZona(nodo)
-                        }}
-                        className="text-[10px] text-teal-400 hover:text-teal-300 font-medium ml-2 px-1.5 py-0.5 rounded bg-white/5 border border-white/5"
-                      >
-                        Editar ✏️
-                      </button>
-                    )}
+                    <div className="flex items-center gap-1">
+                      {onEditZona && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onEditZona(nodo)
+                          }}
+                          className="text-[10px] text-teal-400 hover:text-teal-300 font-medium ml-1 px-1.5 py-0.5 rounded bg-white/5 border border-white/5"
+                        >
+                          ✏️ Sugerir edición
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <UrgenciaBadge nivel={nodo.semaforo_medico} />
+                    {estaIncompleta(nodo) && (
+                      <span className="text-[10px] text-amber-400 bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded-full">
+                        ⚠️ Ubicación incompleta
+                      </span>
+                    )}
                     <span className="text-xs text-muted-foreground">
                       {nodo.poblacion_estimada.toLocaleString()} pers.
                     </span>
                   </div>
+                  {nodo.ciudad && nodo.estado && (
+                    <span className="text-[10px] text-zinc-500 truncate max-w-[180px]">
+                      {nodo.ciudad}, {nodo.estado}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* Déficit */}
+              {/* Déficit + Toggle prioridad */}
               <div className="px-4 py-3 flex items-center">
-                <div className="w-full">
+                <div className="w-full space-y-2">
                   <DeficitBar actual={nodo.deficit_diario_raciones} total={nodo.poblacion_estimada * 3} />
                   {nodo.deficit_diario_agua_litros > 0 && (
                     <p className="text-xs text-blue-400/70 mt-1">
                       💧 {nodo.deficit_diario_agua_litros.toLocaleString()} L agua
                     </p>
                   )}
+                  <button
+                    onClick={() => onTogglePrioridad(nodo.id)}
+                    className={`text-[10px] px-2 py-1 rounded-lg border font-medium transition-colors ${
+                      zonasPrioritarias.has(nodo.id)
+                        ? 'bg-teal-500/20 border-teal-500/40 text-teal-300'
+                        : 'bg-white/5 border-white/10 text-zinc-400 hover:text-zinc-200'
+                    }`}
+                  >
+                    {zonasPrioritarias.has(nodo.id) ? '🎯 Prioritaria' : 'Marcar ayuda prioritaria'}
+                  </button>
                 </div>
               </div>
 
-              {/* Franjas horarias */}
-              {FRANJAS.map(franja => {
-                const despacho = despachosNodo.find(d => d.franja === franja) ?? null
-                return (
+              {/* Franjas horarias (solo si marcada como prioritaria) */}
+              {zonasPrioritarias.has(nodo.id) ? (
+                FRANJAS.map(franja => {
+                  const despacho = despachosNodo.find(d => d.franja === franja) ?? null
+                  return (
+                    <div key={franja} className="px-2 py-3 flex items-center justify-center">
+                      <TimeSlotCell
+                        nodo={nodo}
+                        franja={franja}
+                        despacho={despacho}
+                        perfilActual={perfilActual}
+                        onSlotClick={onSlotClick}
+                      />
+                    </div>
+                  )
+                })
+              ) : (
+                FRANJAS.map(franja => (
                   <div key={franja} className="px-2 py-3 flex items-center justify-center">
-                    <TimeSlotCell
-                      nodo={nodo}
-                      franja={franja}
-                      despacho={despacho}
-                      perfilActual={perfilActual}
-                      onSlotClick={onSlotClick}
-                    />
+                    <span className="text-[10px] text-zinc-600">—</span>
                   </div>
-                )
-              })}
+                ))
+              )}
             </div>
           )
         })}

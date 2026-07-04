@@ -94,12 +94,14 @@ export function DashboardClient({
     capacidad_hospedaje: perfilInicial.capacidad_hospedaje,
     capacidad_salud_camas: perfilInicial.capacidad_salud_camas,
     capacidad_raciones_diarias: perfilInicial.capacidad_raciones_diarias,
-    tipo_racion: perfilInicial.tipo_racion
+    tipo_racion: perfilInicial.tipo_racion,
+    descripcion_tareas: perfilInicial.descripcion_tareas || ''
   })
   
   const [filtro, setFiltro] = useState<FiltroActivo>('todos')
   const [slotSeleccionado, setSlotSeleccionado] = useState<{ nodo: NodoGeografico; franja: BloquesTiempo } | null>(null)
   const [realtimeStatus, setRealtimeStatus] = useState<'connecting' | 'active' | 'error'>('connecting')
+  const [zonasPrioritarias, setZonasPrioritarias] = useState<Set<string>>(new Set())
 
   // Modales y formularios
   const [showCrearZona, setShowCrearZona] = useState(false)
@@ -231,7 +233,8 @@ export function DashboardClient({
           capacidad_hospedaje: data.capacidad_hospedaje,
           capacidad_salud_camas: data.capacidad_salud_camas,
           capacidad_raciones_diarias: data.capacidad_raciones_diarias,
-          tipo_racion: data.tipo_racion
+          tipo_racion: data.tipo_racion,
+          descripcion_tareas: data.descripcion_tareas || ''
         })
       }
     }
@@ -280,6 +283,15 @@ export function DashboardClient({
 
   const handleSlotClick = useCallback((nodo: NodoGeografico, franja: BloquesTiempo) => {
     setSlotSeleccionado({ nodo, franja })
+  }, [])
+
+  const handleTogglePrioridad = useCallback((nodoId: string) => {
+    setZonasPrioritarias(prev => {
+      const next = new Set(prev)
+      if (next.has(nodoId)) next.delete(nodoId)
+      else next.add(nodoId)
+      return next
+    })
   }, [])
 
   const handleDespachoCreado = useCallback((nuevoDespacho: Despacho) => {
@@ -387,6 +399,7 @@ export function DashboardClient({
         body: JSON.stringify(nuevaZonaForm),
       })
       if (response.ok) {
+        const nuevo = await response.json()
         setShowCrearZona(false)
         setNuevaZonaForm({
           nombre_nodo: '',
@@ -400,7 +413,7 @@ export function DashboardClient({
           calle_casa: '',
           punto_referencia: '',
         })
-        fetchNodos()
+        setNodos(prev => [...prev, nuevo])
       } else {
         const err = await response.json()
         alert(`Error: ${err.error}`)
@@ -423,9 +436,10 @@ export function DashboardClient({
         })
       })
       if (response.ok) {
+        const nueva = await response.json()
         setShowCrearSolicitud(false)
         setNuevaSolicitudForm({ tipo_insumo: '', cantidad_solicitada: 1, tipo_solicitud: 'entrega', categoria: 'comida', descripcion: '' })
-        fetchSolicitudes()
+        setSolicitudes(prev => [nueva, ...prev])
         setActiveTab('sabana_solicitudes')
       } else {
         const err = await response.json()
@@ -458,12 +472,13 @@ export function DashboardClient({
         })
       })
       if (response.ok) {
+        const nuevo = await response.json()
         setShowCrearDespacho(false)
         setNuevoDespachoForm({
           destino_perfil_id: '', destino_nodo_id: '', tipo_insumo: '', cantidad: 1, whatsapp_chofer: '',
           capacidad_carga_disponible: '', capacidad_voluntarios_disponible: 0, punto_encuentro: '', hora_salida: ''
         })
-        fetchEnvios()
+        setDespachosIntermedios(prev => [nuevo, ...prev])
         setActiveTab('rutas_transporte')
       } else {
         const err = await response.json()
@@ -558,9 +573,10 @@ export function DashboardClient({
         })
       })
       if (response.ok) {
+        const nuevo = await response.json()
         setShowCrearTraslado(false)
         setNuevoTrasladoForm({ cantidad_personas: 1, observaciones: '' })
-        fetchTraslados()
+        setTraslados(prev => [nuevo, ...prev])
       } else {
         const err = await response.json()
         alert(`Error: ${err.error}`)
@@ -659,7 +675,8 @@ export function DashboardClient({
           capacidad_hospedaje: Number(profileForm.capacidad_hospedaje),
           capacidad_salud_camas: Number(profileForm.capacidad_salud_camas),
           capacidad_raciones_diarias: Number(profileForm.capacidad_raciones_diarias),
-          tipo_racion: profileForm.tipo_racion
+          tipo_racion: profileForm.tipo_racion,
+          descripcion_tareas: profileForm.descripcion_tareas || null
         })
         .eq('id', perfil.id)
 
@@ -911,7 +928,11 @@ export function DashboardClient({
     <div className="min-h-dvh flex flex-col">
       {/* Modal de Términos */}
       {showTerms && (
-        <TermsModal perfil={perfil} onAccepted={() => setShowTerms(false)} />
+        <TermsModal perfil={perfil} onAccepted={() => {
+          setShowTerms(false)
+          setPerfil(prev => ({ ...prev, terminos_aceptados: true }))
+          fetchMiPerfil()
+        }} />
       )}
 
       {/* TOP BAR */}
@@ -980,7 +1001,7 @@ export function DashboardClient({
                 activeTab === 'libro_mayor' ? 'bg-teal-500/15 border border-teal-500/30 text-teal-400 font-semibold' : 'text-muted-foreground hover:bg-white/5 hover:text-foreground'
               }`}
             >
-              <span>📋</span> <span>Libro Mayor (Zonas)</span>
+              <span>📋</span> <span>Libro Mayor (Ubicaciones)</span>
             </button>
 
             <button
@@ -1086,9 +1107,10 @@ export function DashboardClient({
           {/* FILTROS (Libro Mayor) */}
           {activeTab === 'libro_mayor' && (
             <div className="space-y-1 border-t border-white/5 pt-4">
-              <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2 px-2">Filtros de Zonas</p>
+<p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2 px-2">Filtros de Ubicaciones</p>
+
               {[
-                { id: 'todos', label: 'Todas las Zonas', icon: '📋', count: nodos.length },
+                { id: 'todos', label: 'Todas las Ubicaciones', icon: '📋', count: nodos.length },
                 { id: 'rojos', label: 'Alertas Críticas', icon: '🔴', count: nodos.filter(n => n.semaforo_medico === 'rojo').length },
                 { id: 'amarillos', label: 'Alerta Moderada', icon: '🟡', count: nodos.filter(n => n.semaforo_medico === 'amarillo').length },
                 { id: 'libres', label: 'Franjas Libres', icon: '✅', count: nodos.filter(n => despachos.filter(d => d.nodo_id === n.id).length < 3).length },
@@ -1168,7 +1190,7 @@ export function DashboardClient({
             <div className="space-y-6">
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
-                  <h2 className="text-lg font-bold text-white">Libro Mayor de Zonas Críticas</h2>
+                  <h2 className="text-lg font-bold text-white">Libro Mayor de Ubicaciones</h2>
                   <p className="text-xs text-zinc-300 mt-1">
                     Lista general de ubicaciones de desastre, semáforo médico y planificación de despachos en franjas.
                   </p>
@@ -1178,18 +1200,48 @@ export function DashboardClient({
                     onClick={() => setShowCrearZona(true)}
                     className="w-full md:w-auto text-xs bg-teal-500 hover:bg-teal-400 text-zinc-950 font-bold rounded-xl px-4 py-2"
                   >
-                    ➕ Registrar Nueva Zona / Ubicación
+                    ➕ Registrar Nueva Ubicación
                   </Button>
                 </div>
               </div>
 
-              {/* NodeTable (Zonas) */}
+              {/* Radar de la Red — visible para todos los roles */}
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="glass rounded-2xl p-4 border border-white/5 text-center">
+                  <p className="text-2xl font-extrabold text-teal-400 font-mono">{solicitudes.filter(s => s.estado === 'pendiente').length}</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">🚨 Solicitudes Pendientes</p>
+                </div>
+                <div className="glass rounded-2xl p-4 border border-white/5 text-center">
+                  <p className="text-2xl font-extrabold text-sky-400 font-mono">{despachos.length}</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">📋 Despachos Hoy</p>
+                </div>
+                <div className="glass rounded-2xl p-4 border border-white/5 text-center">
+                  <p className="text-2xl font-extrabold text-red-400 font-mono">{nodos.filter(n => n.semaforo_medico === 'rojo').length}</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">🔴 Alertas Críticas</p>
+                </div>
+                <div className="glass rounded-2xl p-4 border border-white/5 text-center">
+                  <p className="text-2xl font-extrabold text-amber-400 font-mono">{traslados.filter(t => t.estado === 'pendiente').length}</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">🏥 Traslados Pendientes</p>
+                </div>
+                <div className="glass rounded-2xl p-4 border border-white/5 text-center">
+                  <p className="text-2xl font-extrabold text-emerald-400 font-mono">{despachosIntermedios.filter(d => d.estado_envio === 'camino').length}</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">🚚 Envíos en Camino</p>
+                </div>
+                <div className="glass rounded-2xl p-4 border border-white/5 text-center">
+                  <p className="text-2xl font-extrabold text-violet-400 font-mono">{perfilesRed.length}</p>
+                  <p className="text-[10px] text-zinc-400 mt-1">👥 Red de Organizaciones</p>
+                </div>
+              </div>
+
+              {/* NodeTable (Ubicaciones) */}
               <NodeTable
                 nodos={nodosFiltrados}
                 despachos={despachos}
                 perfilActual={perfil}
                 onSlotClick={handleSlotClick}
                 onEditZona={setZonaAEditar}
+                zonasPrioritarias={zonasPrioritarias}
+                onTogglePrioridad={handleTogglePrioridad}
               />
 
               {/* Analítica Predictiva y Cercanía de Centros */}
@@ -1987,6 +2039,21 @@ export function DashboardClient({
                   </div>
                 )}
 
+                {/* Descripción de Tareas */}
+                <div className="space-y-1 border-t border-white/5 pt-3">
+                  <Label htmlFor="prof_descripcion_tareas" className="text-xs text-zinc-300">
+                    📋 ¿Qué tareas realiza tu organización?
+                  </Label>
+                  <textarea
+                    id="prof_descripcion_tareas"
+                    placeholder="Ej: Recolectamos insumos médicos, alimentos no perecederos y ropa."
+                    value={profileForm.descripcion_tareas}
+                    onChange={(e) => setProfileForm(p => ({ ...p, descripcion_tareas: e.target.value }))}
+                    rows={3}
+                    className="bg-zinc-900 border border-white/10 text-white rounded-xl px-3 py-2.5 text-xs w-full focus:border-teal-500/60 focus:ring-teal-500/20 resize-vertical placeholder:text-zinc-600"
+                  />
+                </div>
+
                 <Button
                   type="submit"
                   className="w-full h-11 bg-teal-500 hover:bg-teal-400 text-zinc-950 font-bold rounded-xl text-xs mt-2"
@@ -2178,7 +2245,7 @@ export function DashboardClient({
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="glass-strong rounded-3xl p-6 max-w-md w-full border border-teal-500/30 space-y-4">
             <div>
-              <h2 className="text-base font-bold text-white">Registrar Nueva Zona Crítica</h2>
+              <h2 className="text-base font-bold text-white">Registrar Nueva Ubicación</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
                 Crea una nueva ubicación geográfica para dirigir y traquear ayuda humanitaria.
               </p>
@@ -2186,7 +2253,7 @@ export function DashboardClient({
 
             <form onSubmit={handleCrearZonaSubmit} className="space-y-3">
               <div className="space-y-1">
-                <Label htmlFor="nombre_nodo_zona" className="text-xs text-zinc-300">Nombre de la Zona / Comunidad</Label>
+                <Label htmlFor="nombre_nodo_zona" className="text-xs text-zinc-300">Nombre de la Ubicación / Comunidad</Label>
                 <Input
                   id="nombre_nodo_zona"
                   type="text"
@@ -2343,7 +2410,7 @@ export function DashboardClient({
                   type="submit"
                   className="text-xs bg-teal-500 hover:bg-teal-400 text-zinc-950 font-bold rounded-xl px-4 py-2"
                 >
-                  Registrar Zona ✓
+                  Registrar Ubicación ✓
                 </Button>
               </div>
             </form>
@@ -2486,7 +2553,7 @@ export function DashboardClient({
                   </div>
 
                   <div>
-                    <Label htmlFor="destino_nodo" className="text-[10px] text-zinc-400">A una Zona Geográfica</Label>
+                    <Label htmlFor="destino_nodo" className="text-[10px] text-zinc-400">A una Ubicación Geográfica</Label>
                     <select
                       id="destino_nodo"
                       value={nuevoDespachoForm.destino_nodo_id}
@@ -2679,7 +2746,7 @@ export function DashboardClient({
             <form onSubmit={handleCrearIncidenciaSubmit} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label htmlFor="inc_nodo" className="text-xs text-zinc-300">Zona Afectada</Label>
+                  <Label htmlFor="inc_nodo" className="text-xs text-zinc-300">Ubicación Afectada</Label>
                   <select
                     id="inc_nodo"
                     value={nuevaIncidenciaForm.nodo_id}
@@ -2946,12 +3013,12 @@ export function DashboardClient({
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="glass-strong rounded-3xl p-6 max-w-md w-full border border-teal-500/30 space-y-4">
             <div>
-              <h2 className="text-base font-bold text-white">Editar Zona Crítica</h2>
+              <h2 className="text-base font-bold text-white">Editar Ubicación</h2>
             </div>
 
             <form onSubmit={handleEditZonaSubmit} className="space-y-3">
               <div className="space-y-1">
-                <Label htmlFor="edit_zona_nombre" className="text-xs text-zinc-300">Nombre de la Zona / Comunidad</Label>
+                <Label htmlFor="edit_zona_nombre" className="text-xs text-zinc-300">Nombre de la Ubicación / Comunidad</Label>
                 <Input
                   id="edit_zona_nombre"
                   type="text"

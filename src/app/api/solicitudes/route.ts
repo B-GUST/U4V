@@ -26,7 +26,11 @@ export async function GET() {
     const supabase = await createClient()
     const { data, error } = await supabase
       .from('solicitudes_recursos')
-      .select('*, perfiles(*)')
+      .select(`
+        *,
+        perfiles(nombre_organizacion, nombre_contacto, whatsapp, instagram, direccion_fisica, tipo_entidad),
+        postulaciones:postulaciones_solicitudes(*, voluntario_perfil:perfiles(nombre_organizacion, whatsapp))
+      `)
       .order('creado_en', { ascending: false })
 
     if (error) throw error
@@ -52,17 +56,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: result.error.issues.map(e => e.message).join('. ') }, { status: 400 })
     }
 
-    const { error } = await supabase
+    const { data: nuevoRegistro, error } = await supabase
       .from('solicitudes_recursos')
       .insert({
         solicitante_id: user.id,
         ...result.data,
         estado: 'pendiente'
       })
+      .select('*, perfiles(nombre_organizacion, nombre_contacto, whatsapp, instagram, direccion_fisica, tipo_entidad), postulaciones:postulaciones_solicitudes(*)')
+      .single()
 
     if (error) throw error
     await registrarAuditoria('crear_solicitud', result.data)
-    return NextResponse.json({ success: true }, { status: 201 })
+    return NextResponse.json(nuevoRegistro, { status: 201 })
   } catch (err: any) {
     console.error('Error creating solicitud:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

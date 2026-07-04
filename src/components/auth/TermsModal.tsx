@@ -13,15 +13,21 @@ interface TermsModalProps {
 export function TermsModal({ perfil, onAccepted }: TermsModalProps) {
   const [loading, setLoading] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const supabase = createClient()
 
   async function handleAccept() {
     setLoading(true)
-    await supabase
+    setError(null)
+    const { error: updateError } = await supabase
       .from('perfiles')
       .update({ terminos_aceptados: true })
       .eq('id', perfil.id)
     setLoading(false)
+    if (updateError) {
+      setError(updateError.message)
+      return
+    }
     onAccepted()
   }
 
@@ -104,6 +110,11 @@ export function TermsModal({ perfil, onAccepted }: TermsModalProps) {
             <p className="text-xs text-muted-foreground text-center mb-3 flex items-center justify-center gap-1">
               <span className="text-amber-400">↓</span>
               Desplázate hasta el final para continuar
+            </p>
+          )}
+          {error && (
+            <p className="text-xs text-red-400 text-center mb-3 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2">
+              {error}
             </p>
           )}
           <Button

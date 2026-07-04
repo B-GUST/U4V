@@ -31,6 +31,7 @@ export default function RegistroPage() {
     capacidad_salud_camas: 0,
     capacidad_raciones_diarias: 0,
     tipo_racion: 'ninguno',
+    descripcion_tareas: '',
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -446,21 +447,23 @@ export default function RegistroPage() {
                   </div>
                 </div>
 
-                {/* 4. Capacidades Operativas (Condicionales) */}
+                {/* 4. Capacidades Operativas (Dinámicas por tipo de entidad) */}
                 <div className="space-y-3 pt-2 border-t border-white/5">
                   <h3 className="text-xs font-bold text-teal-400 uppercase tracking-wider">4. Capacidad de Ayuda</h3>
-                  
+                  <p className="text-[10px] text-zinc-500 -mt-1">Selecciona las capacidades que correspondan a tu organización.</p>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Albergue */}
+                    {/* Albergue — refugios, hospitales, otros */}
                     {(formData.tipo_entidad === 'refugio' || formData.tipo_entidad === 'hospital' || formData.tipo_entidad === 'otro') && (
                       <div className="space-y-1">
                         <Label htmlFor="capacidad_hospedaje" className="text-xs font-medium text-zinc-300">
-                          Hospedaje (Personas)
+                          🏠 Hospedaje (Personas)
                         </Label>
                         <Input
                           id="capacidad_hospedaje"
                           type="number"
                           min="0"
+                          placeholder="Ej: 50"
                           value={formData.capacidad_hospedaje}
                           onChange={handleChange}
                           required
@@ -469,16 +472,17 @@ export default function RegistroPage() {
                       </div>
                     )}
 
-                    {/* Salud */}
+                    {/* Camas de Salud — hospitales */}
                     {formData.tipo_entidad === 'hospital' && (
                       <div className="space-y-1">
                         <Label htmlFor="capacidad_salud_camas" className="text-xs font-medium text-zinc-300">
-                          Camas Disponibles
+                          🏥 Camas de Emergencia
                         </Label>
                         <Input
                           id="capacidad_salud_camas"
                           type="number"
                           min="0"
+                          placeholder="Ej: 20"
                           value={formData.capacidad_salud_camas}
                           onChange={handleChange}
                           required
@@ -487,39 +491,59 @@ export default function RegistroPage() {
                       </div>
                     )}
 
-                    {/* Comedor / Alimentos */}
-                    <div className="space-y-1">
-                      <Label htmlFor="capacidad_raciones_diarias" className="text-xs font-medium text-zinc-300">
-                        Comedor (Raciones/Día)
-                      </Label>
-                      <Input
-                        id="capacidad_raciones_diarias"
-                        type="number"
-                        min="0"
-                        value={formData.capacidad_raciones_diarias}
-                        onChange={handleChange}
-                        required
-                        className="bg-white/5 border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10 text-sm"
-                      />
-                    </div>
+                    {/* Raciones — centros de acopio, ongs, refugios */}
+                    {(formData.tipo_entidad === 'centro_acopio' || formData.tipo_entidad === 'ong' || formData.tipo_entidad === 'refugio' || formData.tipo_entidad === 'otro') && (
+                      <>
+                        <div className="space-y-1">
+                          <Label htmlFor="capacidad_raciones_diarias" className="text-xs font-medium text-zinc-300">
+                            🍲 Comedor (Raciones/Día)
+                          </Label>
+                          <Input
+                            id="capacidad_raciones_diarias"
+                            type="number"
+                            min="0"
+                            placeholder="Ej: 200"
+                            value={formData.capacidad_raciones_diarias}
+                            onChange={handleChange}
+                            required
+                            className="bg-white/5 border-white/10 focus:border-teal-500/60 focus:ring-teal-500/20 rounded-xl h-10 text-sm"
+                          />
+                        </div>
 
-                    {/* Tipo de Ración */}
-                    {formData.capacidad_raciones_diarias > 0 && (
-                      <div className="space-y-1">
-                        <Label htmlFor="tipo_racion" className="text-xs font-medium text-zinc-300">
-                          El Menú Incluye
-                        </Label>
-                        <select
-                          id="tipo_racion"
-                          value={formData.tipo_racion}
-                          onChange={handleChange}
-                          className="bg-zinc-900 border border-white/10 text-white rounded-xl h-10 px-3 text-sm focus:border-teal-500/60 focus:ring-teal-500/20 w-full"
-                        >
-                          <option value="comida_bebida">Comida y Bebida</option>
-                          <option value="solo_comida">Solo Alimento</option>
-                        </select>
-                      </div>
+                        {formData.capacidad_raciones_diarias > 0 && (
+                          <div className="space-y-1">
+                            <Label htmlFor="tipo_racion" className="text-xs font-medium text-zinc-300">
+                              El Menú Incluye
+                            </Label>
+                            <select
+                              id="tipo_racion"
+                              value={formData.tipo_racion}
+                              onChange={handleChange}
+                              className="bg-zinc-900 border border-white/10 text-white rounded-xl h-10 px-3 text-sm focus:border-teal-500/60 focus:ring-teal-500/20 w-full"
+                            >
+                              <option value="comida_bebida">Comida y Bebida</option>
+                              <option value="solo_comida">Solo Alimento</option>
+                            </select>
+                          </div>
+                        )}
+                      </>
                     )}
+                  </div>
+
+                  {/* Descripción de Tareas */}
+                  <div className="space-y-1 pt-2">
+                    <Label htmlFor="descripcion_tareas" className="text-xs font-medium text-zinc-300">
+                      📋 ¿Qué tareas realiza tu organización?
+                    </Label>
+                    <textarea
+                      id="descripcion_tareas"
+                      placeholder="Ej: Recolectamos insumos médicos, alimentos no perecederos y ropa. También coordinamos traslados de pacientes dados de alta."
+                      value={formData.descripcion_tareas}
+                      onChange={(e) => setFormData(prev => ({ ...prev, descripcion_tareas: e.target.value }))}
+                      rows={3}
+                      className="bg-zinc-900 border border-white/10 text-white rounded-xl px-3 py-2.5 text-sm w-full focus:border-teal-500/60 focus:ring-teal-500/20 resize-vertical placeholder:text-zinc-600"
+                    />
+                    <p className="text-[10px] text-zinc-500">Describe brevemente las actividades que realizas para que la red conozca tu enfoque operativo.</p>
                   </div>
                 </div>
 

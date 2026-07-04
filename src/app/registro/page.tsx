@@ -92,10 +92,16 @@ export default function RegistroPage() {
         body: JSON.stringify(payload),
       })
 
-      const data = await response.json()
+      const text = await response.text()
+      let data: { error?: string } = {}
+      try {
+        data = JSON.parse(text)
+      } catch {
+        // 405 u otra respuesta sin JSON
+      }
 
       if (!response.ok) {
-        setError(data.error || 'Ocurrió un error inesperado.')
+        setError(data.error || `Error del servidor (${response.status}). Intenta de nuevo o contacta a soporte.`)
       } else {
         setSuccess(true)
         setTimeout(() => {

@@ -30,6 +30,11 @@ export async function proxy(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
 
+  // Las rutas de la API manejan su propia autenticación/seguridad y no deben ser redirigidas a /login
+  if (pathname.startsWith('/api')) {
+    return supabaseResponse
+  }
+
   // Rutas públicas — no requieren autenticación
   const publicRoutes = ['/login', '/reporte', '/registro', '/bgust', '/auth/callback', '/privacidad', '/terminos']
   const isPublicRoute = publicRoutes.some((r) => pathname.startsWith(r))
